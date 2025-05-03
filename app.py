@@ -112,12 +112,10 @@ def exibir_formulario_conta(dados, idx_prefix="conta"):
     # --------------------------
     col1, col2, col3 = st.columns(3)
     with col1:
-        opcoes_conta = ["Selecione..."] + get_nomes_conta_unicos() + ["Outros"]
+        opcoes_conta = get_nomes_conta_unicos() + ["Outros"]
 
         valor_inicial = (
-            "Selecione..."
-            if idx_prefix == "nova"
-            else dados.get('nome_da_conta') if dados.get('nome_da_conta') in opcoes_conta else "Outros"
+            dados.get('nome_da_conta') if dados.get('nome_da_conta') in opcoes_conta else "Outros"
         )
 
         selecao = st.selectbox(
@@ -198,7 +196,7 @@ def exibir_formulario_conta(dados, idx_prefix="conta"):
 
     with col1:
         if idx_prefix != "nova" and st.button("Salvar alterações", key=f"salvar_{idx_prefix}"):
-            if dados['nome_da_conta'] in ["Selecione...", ""]:
+            if dados['nome_da_conta'] in ["", None]:
                 st.warning("Por favor, selecione ou preencha um nome de conta válido.")
             else:
                 salvar_conta(dados)
@@ -220,6 +218,7 @@ def exibir_formulario_conta(dados, idx_prefix="conta"):
                 print("Erro ao excluir conta.")
 
     return dados
+
 
 
 
