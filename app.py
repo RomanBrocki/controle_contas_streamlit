@@ -112,12 +112,12 @@ def exibir_formulario_conta(dados, idx_prefix="conta"):
     # --------------------------
     col1, col2, col3 = st.columns(3)
     with col1:
-        opcoes_conta = ["Selecione..."] + get_nomes_conta_unicos() + ["Outros"]
+        opcoes_conta = ["Selecione..."] + get_nomes_conta_unicos()
 
         valor_inicial = (
-            "Selecione..."
-            if idx_prefix == "nova"
-            else dados.get('nome_da_conta') if dados.get('nome_da_conta') in opcoes_conta else "Outros"
+            dados.get('nome_da_conta')
+            if dados.get('nome_da_conta') in opcoes_conta
+            else "Selecione..."
         )
 
         selecao = st.selectbox(
@@ -126,12 +126,14 @@ def exibir_formulario_conta(dados, idx_prefix="conta"):
             index=opcoes_conta.index(valor_inicial),
             key=f"nome_da_conta_{idx_prefix}"
         )
+        dados['nome_da_conta'] = selecao
 
-        if selecao == "Outros":
+        # Se for "Selecione...", exibe campo de texto para nova conta
+        if selecao == "Selecione...":
             custom_nome = st.text_input("Digite o nome da nova conta:", key=f"nome_custom_{idx_prefix}")
-            dados['nome_da_conta'] = custom_nome
-        else:
-            dados['nome_da_conta'] = selecao
+            if custom_nome.strip():
+                dados['nome_da_conta'] = custom_nome
+
 
     # --------------------------
     # 💵 Seção 2: Valor e Data
