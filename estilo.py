@@ -44,19 +44,16 @@ def set_background(image_file):
 def aplicar_estilo_mockup():
     """
     Aplica um estilo visual escuro e moderno ao app Streamlit,
-    com cabeçalho flutuante, botões estilizados e melhorias para uso mobile.
-    Também tenta evitar que o teclado virtual apareça ao tocar em selectboxes.
+    com cabeçalho flutuante e botões estilizados.
     """
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-
     .stApp {
         background-color: #1e1e1e;
         font-family: 'Roboto', sans-serif;
         color: #ffffff;
     }
-
     .floating-header {
         position: sticky;
         top: 0;
@@ -68,21 +65,18 @@ def aplicar_estilo_mockup():
         flex-direction: column;
         align-items: center;
     }
-
     .month-title {
         text-align: center;
         font-size: 32px;
         font-weight: bold;
         margin-bottom: 10px;
     }
-
     .header-actions {
         width: 100%;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
-
     .stButton > button {
         border-radius: 10px;
         padding: 0.75em 1.5em;
@@ -91,28 +85,9 @@ def aplicar_estilo_mockup():
         font-weight: bold;
         transition: 0.3s;
     }
-
     .stButton > button:hover {
         background-color: #6b7b8c;
         transform: scale(1.05);
     }
-
-    /* ===================================================
-       🛡️ Mobile fix: Evita teclado virtual nos selectboxes
-       =================================================== */
-    @media (max-width: 768px) {
-        .stSelectbox input {
-            pointer-events: none !important;
-            user-select: none !important;
-            -webkit-user-select: none !important;
-            caret-color: transparent !important;
-            background-color: transparent !important;
-        }
-        .stSelectbox {
-            pointer-events: auto !important; /* garante que botão dropdown funcione */
-        }
-    }
-
     </style>
     """, unsafe_allow_html=True)
-
