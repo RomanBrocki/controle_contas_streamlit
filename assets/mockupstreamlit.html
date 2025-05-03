@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Contas - Estilo Metálico Moderno Compactado</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #1f1f1f;
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 20px;
+      color: #e0e0e0;
+    }
+    h1 {
+      text-align: center;
+      margin-top: 20px;
+      color: #cccccc;
+    }
+    .floating-header {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #292d30;
+      padding: 10px 15px;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .floating-header input {
+      width: 90px;
+      padding: 5px;
+      border: 1px solid #666;
+      border-radius: 8px;
+      text-align: right;
+      background-color: #3a3f44;
+      color: white;
+    }
+    .button {
+      background-color: #4a5c6a;
+      color: white;
+      padding: 8px 15px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+    .button:hover {
+      background-color: #7f8c8d;
+      transform: scale(1.05);
+    }
+    .card {
+      background-color: #292d30;
+      border-radius: 15px;
+      padding: 15px;
+      margin-top: 20px;
+      box-shadow: 0 2px 8px rgba(255, 255, 255, 0.05);
+      transition: box-shadow 0.3s;
+    }
+    .card:hover {
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+    }
+    .card-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .card-row label {
+      font-weight: bold;
+      font-size: 13px;
+      color: #b0b0b0;
+    }
+    .small-input, select {
+      flex: 1 1 48%;
+      padding: 5px;
+      border-radius: 8px;
+      border: 1px solid #666;
+      background-color: #3a3f44;
+      color: white;
+    }
+    .wide-input {
+      flex: 1 1 100%;
+      padding: 5px;
+      border-radius: 8px;
+      border: 1px solid #666;
+      background-color: #3a3f44;
+      color: white;
+    }
+    .checkbox-group {
+      flex: 1 1 48%;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .checkbox-input {
+      transform: scale(1.2);
+    }
+    .actions {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Mês/Ano</h1>
+
+<div class="floating-header">
+  <strong>Total:</strong> <input type="text" placeholder="R$0,00">
+  <button class="button">Nova Conta</button>
+</div>
+
+<!-- Lista de Contas -->
+<div class="card">
+  <div class="card-row">
+    <label>Nome da conta:</label>
+    <select class="wide-input">
+      <option>Conta de Luz</option>
+      <option>Conta de Água</option>
+      <option>Internet</option>
+      <option>Outros</option>
+    </select>
+  </div>
+  <div class="card-row">
+    <input class="small-input" type="number" placeholder="Valor">
+    <input class="small-input" type="date" value="2025-04-26">
+  </div>
+  <div class="card-row">
+    <select class="small-input">
+      <option selected>Roman</option>
+      <option>Tati</option>
+    </select>
+    <div class="checkbox-group">
+      <label>Dividida</label>
+      <input class="checkbox-input" type="checkbox">
+    </div>
+  </div>
+  <div class="card-row">
+    <label>Observações:</label>
+    <input class="wide-input" type="text">
+  </div>
+  <div class="card-row">
+    <label>Boleto (URL):</label>
+    <input class="wide-input" type="url">
+  </div>
+  <div class="card-row">
+    <label>Comprovante (URL):</label>
+    <input class="wide-input" type="url">
+  </div>
+</div>
+
+<div class="actions">
+  <button class="button">Processar</button>
+  <button class="button">Gerar Relatório</button>
+</div>
+
+</body>
+</html>
+

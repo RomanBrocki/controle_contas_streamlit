@@ -1,0 +1,28 @@
+# Ambiente virtual
+controle_contas_streamlit/
+
+# Cache do Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Arquivos temporários de backup
+*.tmp
+*.bak
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Configurações de IDE
+.vscode/
+.idea/
+
+# Secrets do Streamlit
+.streamlit/secrets.toml
+
+# Arquivos duplicados que não devem ir para o repositório
+app - Copia.py
+app - Copia (2).py
+relatorio_utils - Copia.py
+supabase_utils - Copia.py
