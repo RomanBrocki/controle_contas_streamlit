@@ -112,12 +112,7 @@ def exibir_formulario_conta(dados, idx_prefix="conta"):
     # --------------------------
     col1, col2, col3 = st.columns(3)
     with col1:
-        nomes_puros = get_nomes_conta_unicos()
-        nomes_limpos = sorted(list(set([
-            nome.strip() for nome in nomes_puros if isinstance(nome, str) and nome.strip()
-        ])))
-        opcoes_conta = ["Selecione..."] + nomes_limpos + ["Outros"]
-
+        opcoes_conta = ["Selecione..."] + get_nomes_conta_unicos() + ["Outros"]
 
         valor_inicial = (
             "Selecione..."
