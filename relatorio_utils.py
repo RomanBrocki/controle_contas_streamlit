@@ -122,15 +122,15 @@ def gerar_grafico_comparativo_duplo(df_atual, df_mes_anterior, df_ano_passado, n
         col_ref="Anterior", col_atual="Atual",
         titulo=f"Comparativo com {mes_ano_anterior}",
         cor_ref="#1f77b4", cor_atual="#ff7f0e",
-        label_ref=mes_ano_anterior, label_atual=atual_label
+        label_atual=atual_label, label_ref=mes_ano_anterior,
     )
 
     plot_duplo(
         ax2, df_ano,
         col_ref="Ano Passado", col_atual="Atual",
         titulo=f"Comparativo com {ano_anterior}",
-        cor_ref="#2ca02c", cor_atual="#ff7f0e",
-        label_ref=ano_anterior, label_atual=atual_label
+        cor_ref="#1f77b4", cor_atual="#ff7f0e",
+        label_atual=atual_label, label_ref=ano_anterior
     )
 
     plt.tight_layout()
