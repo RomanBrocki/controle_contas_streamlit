@@ -165,23 +165,31 @@ def salvar_conta(dados_dict):
 
 def get_nomes_conta_unicos():
     """
-    Retorna uma lista ordenada com os nomes únicos da coluna 'nome_da_conta'
-    presentes na tabela do Supabase.
+    Retorna uma lista ordenada com os nomes únicos da coluna 'nome_da_conta',
+    excluindo:
+    - Registros com 'instancia' igual a 'legado'
+    - Registros com 'nome_da_conta' igual a 'solar'
 
     Retorno:
     - list: Lista de strings com nomes de contas únicas (sem repetições).
     """
-    url = f"{SUPABASE_URL}/rest/v1/{TABELA}?select=nome_da_conta"
+    url = f"{SUPABASE_URL}/rest/v1/{TABELA}?select=nome_da_conta,instancia"
     response = requests.get(url, headers=HEADERS)
 
     if response.status_code == 200:
         dados = response.json()
 
-        # Conjunto para eliminar duplicatas + filtragem de campos vazios
-        nomes = list({item["nome_da_conta"] for item in dados if item.get("nome_da_conta")})
+        nomes = list({
+            item["nome_da_conta"].strip()
+            for item in dados
+            if item.get("nome_da_conta")
+            and item["nome_da_conta"].strip().lower() != "solar"
+            and item.get("instancia", "").lower() != "legado"
+        })
         return sorted(nomes)
 
     return []
+
 
 
 # ==============================
