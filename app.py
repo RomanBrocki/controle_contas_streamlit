@@ -348,8 +348,11 @@ if st.session_state["tela_atual"] == "inicial":
     with col2:
         if st.button("Mês Vigente"):
             ir_para_mes_vigente()
+            st.rerun()
         if st.button("Histórico"):
             ir_para_historico()
+            st.rerun()
+
 
     with col3:
         st.write("")
