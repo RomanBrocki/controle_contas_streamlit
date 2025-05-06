@@ -220,6 +220,50 @@ def carregar_mes_referente(mes, ano, delta_meses=0, delta_anos=0):
     # Reutiliza a função principal de carregamento
     return carregar_tabela(data_destino.month, data_destino.year)
 
+# ==============================
+# 📅 LISTAR ANOS E MESES DISPONÍVEIS
+# ==============================
+
+def get_anos_meses_disponiveis():
+    """
+    Recupera os anos e meses distintos disponíveis na tabela do Supabase.
+
+    Usado para popular seletores de período na interface, garantindo que o usuário
+    só selecione meses/anos para os quais há registros disponíveis no banco.
+
+    Retorno:
+    - tuple: Dois elementos:
+        - list[int]: Lista de anos disponíveis, ordenada do mais recente ao mais antigo.
+        - list[int]: Lista de meses disponíveis, ordenada do menor (janeiro) ao maior (dezembro).
+    """
+    url = f"{SUPABASE_URL}/rest/v1/{TABELA}?select=ano,mes"
+    response = requests.get(url, headers=HEADERS)
+
+    if response.status_code == 200:
+        try:
+            dados = response.json()
+            df = pd.DataFrame(dados)
+
+            if df.empty:
+                return [], []
+
+            # Remove linhas com valores nulos e converte para inteiros
+            df = df.dropna(subset=["ano", "mes"]).astype({"ano": int, "mes": int})
+
+            anos = sorted(df["ano"].unique(), reverse=True)
+            meses = sorted(df["mes"].unique())
+
+            return anos, meses
+
+        except Exception as e:
+            print(f"Erro ao processar resposta JSON: {e}")
+            return [], []
+
+    else:
+        print(f"Erro ao consultar anos e meses disponíveis: Status {response.status_code}")
+        return [], []
+
+
 
 
 

@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from io import BytesIO
 
 import matplotlib.pyplot as plt
@@ -7,7 +8,7 @@ import numpy as np
 import pandas as pd
 from fpdf import FPDF
 
-from supabase_utils import carregar_mes_referente
+from supabase_utils import carregar_mes_referente, carregar_tabela
 
 
 # ------------------------
@@ -368,6 +369,189 @@ def gerar_relatorio_pdf(df_atual, nome_mes, ano):
     for path in [grafico_path, comparativo_path]:
         if os.path.exists(path):
             os.remove(path)
+
+    return buffer
+
+# =====================================================
+# 📥 Carregar dados de uma conta em um intervalo de meses
+# =====================================================
+
+def carregar_dados_conta_periodo(mes_inicio, ano_inicio, mes_fim, ano_fim, nome_da_conta):
+    """
+    Carrega os dados de uma conta específica ao longo de um intervalo de meses,
+    filtrando diretamente na API Supabase e agrupando os resultados por mês e ano.
+
+    Parâmetros:
+    - mes_inicio (int): Mês inicial (1–12)
+    - ano_inicio (int): Ano inicial (ex: 2024)
+    - mes_fim (int): Mês final (1–12)
+    - ano_fim (int): Ano final (ex: 2025)
+    - nome_da_conta (str): Nome da conta a ser filtrada
+
+    Retorno:
+    - pd.DataFrame: DataFrame com colunas ['ano', 'mes', 'valor_total']
+    """
+    # Garante que a data inicial seja anterior à final
+    data_inicio = datetime(ano_inicio, mes_inicio, 1)
+    data_fim = datetime(ano_fim, mes_fim, 1)
+
+    if data_inicio > data_fim:
+        data_inicio, data_fim = data_fim, data_inicio  # Inverte se necessário
+
+    # Lista todas as combinações de mês/ano no intervalo
+    data_atual = data_inicio
+    registros = []
+
+    while data_atual <= data_fim:
+        mes = data_atual.month
+        ano = data_atual.year
+
+        df_mes = carregar_tabela(mes, ano)
+
+        if not df_mes.empty:
+            df_filtrado = df_mes[df_mes["nome_da_conta"] == nome_da_conta].copy()
+            df_filtrado["mes"] = mes
+            df_filtrado["ano"] = ano
+            registros.append(df_filtrado)
+
+        # Avança um mês
+        data_atual += relativedelta(months=1)
+
+    if not registros:
+        return pd.DataFrame(columns=["ano", "mes", "valor_total"])
+
+    df_todos = pd.concat(registros, ignore_index=True)
+    df_todos["valor"] = pd.to_numeric(df_todos["valor"], errors="coerce").fillna(0)
+
+    df_agrupado = (
+        df_todos.groupby(["ano", "mes"])["valor"]
+        .sum()
+        .reset_index()
+        .rename(columns={"valor": "valor_total"})
+        .sort_values(by=["ano", "mes"])
+    )
+
+    return df_agrupado
+
+# =====================================================
+# 📈 Gerar gráfico de linha comparativo de conta por período
+# =====================================================
+
+def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_fim, ano_fim):
+    """
+    Gera um gráfico de linha com pontos para visualização da variação do valor total
+    de uma conta específica ao longo de um intervalo de meses.
+
+    Parâmetros:
+    - df (pd.DataFrame): DataFrame com colunas ['ano', 'mes', 'valor_total']
+    - nome_conta (str): Nome da conta (ex: 'Luz')
+    - mes_inicio (int): Mês inicial (1 a 12)
+    - ano_inicio (int): Ano inicial
+    - mes_fim (int): Mês final (1 a 12)
+    - ano_fim (int): Ano final
+
+    Retorno:
+    - matplotlib.figure.Figure: Objeto da figura com o gráfico pronto
+    """
+
+    import matplotlib.pyplot as plt
+
+    if df.empty or "mes" not in df.columns or "ano" not in df.columns or "valor_total" not in df.columns:
+        raise ValueError("DataFrame de entrada está vazio ou incompleto.")
+
+    # Conversões necessárias
+    df["mes"] = df["mes"].astype(int)
+    df["ano"] = df["ano"].astype(int)
+
+    # Cria coluna de rótulo do eixo X no formato MM/AAAA
+    df["periodo"] = df.apply(lambda row: f"{int(row['mes']):02d}/{int(row['ano'])}", axis=1)
+
+    # Início do gráfico
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.plot(df["periodo"], df["valor_total"], marker="o", linestyle="-", color="#4FC3F7")
+
+    # Rótulos de valor sobre cada ponto
+    for i, valor in enumerate(df["valor_total"]):
+        ax.text(i, valor + 1, f"R$ {valor:.2f}", ha='center', va='bottom', fontsize=9)
+
+    # Título dinâmico
+    titulo = f"Comparativo de conta '{nome_conta}' - {mes_inicio:02d}/{ano_inicio} a {mes_fim:02d}/{ano_fim}"
+    ax.set_title(titulo, fontsize=14)
+    ax.set_ylabel("Valor (R$)")
+    ax.set_xlabel("Período")
+    ax.grid(True, linestyle="--", alpha=0.4)
+
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.style.use("dark_background")
+
+    return fig
+
+# =====================================================
+# 📄 Gerar PDF comparativo de uma conta no tempo
+# =====================================================
+
+def gerar_pdf_comparativo_conta(df, nome_conta, mes_inicio, ano_inicio, mes_fim, ano_fim):
+    """
+    Gera um PDF contendo o gráfico de linha da variação de uma conta específica
+    ao longo de um intervalo de meses, além de resumo geral do valor total acumulado.
+
+    Parâmetros:
+    - df (pd.DataFrame): DataFrame com colunas ['ano', 'mes', 'valor_total']
+    - nome_conta (str): Nome da conta (ex: 'Luz')
+    - mes_inicio (int): Mês inicial (1 a 12)
+    - ano_inicio (int): Ano inicial
+    - mes_fim (int): Mês final (1 a 12)
+    - ano_fim (int): Ano final
+
+    Retorno:
+    - BytesIO: Buffer contendo o PDF pronto para download
+    """
+    import os
+    from io import BytesIO
+    from fpdf import FPDF
+
+    # -----------------------------
+    # 📊 Gerar gráfico e salvar temporariamente
+    # -----------------------------
+    fig = gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_fim, ano_fim)
+    caminho_img = "grafico_comparativo_temp.png"
+    fig.savefig(caminho_img)
+    plt.close(fig)
+
+    # -----------------------------
+    # 📄 Iniciar PDF
+    # -----------------------------
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 16)
+    titulo = f"Comparativo - {nome_conta}: {mes_inicio:02d}/{ano_inicio} a {mes_fim:02d}/{ano_fim}"
+    pdf.cell(0, 10, titulo, ln=True, align="C")
+
+    # -----------------------------
+    # 🖼️ Inserir imagem do gráfico
+    # -----------------------------
+    pdf.image(caminho_img, x=10, y=30, w=190)
+    pdf.set_y(110)
+
+    # -----------------------------
+    # 🧾 Inserir resumo geral
+    # -----------------------------
+    valor_total = df["valor_total"].sum()
+    pdf.set_font("Arial", "", 12)
+    pdf.ln(85)
+    pdf.cell(0, 10, f"Valor total acumulado no período: R$ {valor_total:,.2f}".replace(".", ","), ln=True)
+
+    # -----------------------------
+    # 💾 Exportar para buffer de memória
+    # -----------------------------
+    buffer = BytesIO()
+    pdf.output(buffer)
+    buffer.seek(0)
+
+    # Limpar imagem temporária
+    if os.path.exists(caminho_img):
+        os.remove(caminho_img)
 
     return buffer
 
