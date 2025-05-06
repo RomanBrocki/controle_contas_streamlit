@@ -258,7 +258,7 @@ def exibir_contas_mes(df, nome_mes, ano, mes):
 
     with col_btn3:
         st.markdown("<div style='display: flex; justify-content: flex-end;'>", unsafe_allow_html=True)
-        if st.button("Gerar Relatório 📄"):
+        if st.button("Gerar Resumo do Mês 📄"):
             st.session_state["gerar_relatorio"] = True
         st.markdown("</div>", unsafe_allow_html=True)
 
