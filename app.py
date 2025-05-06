@@ -352,6 +352,10 @@ if st.session_state["tela_atual"] == "inicial":
         if st.button("Histórico"):
             ir_para_historico()
             st.rerun()
+        if st.button("Relatórios"):
+            st.session_state["tela_atual"] = "relatorios"
+            st.rerun()
+
 
 
     with col3:
@@ -408,6 +412,22 @@ else:
                 st.session_state["ano_historico"],
                 mes_selecionado,
             )
+    # --------------------------
+    # 📊 Tela: Relatórios
+    # --------------------------
+    elif st.session_state["tela_atual"] == "relatorios":
+        st.button("Voltar", on_click=voltar_tela_inicial)
+        st.markdown("## Relatórios")
+
+        col_a, col_b = st.columns(2)
+
+        with col_a:
+            if st.button("Relatório Comparativo"):
+                st.info("⚙️ Em desenvolvimento...")
+
+        with col_b:
+            if st.button("Relatório Sintético por Período"):
+                st.info("⚙️ Em desenvolvimento...")
 
 
 
