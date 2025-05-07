@@ -228,13 +228,8 @@ def get_anos_meses_disponiveis():
     """
     Recupera os anos e meses distintos disponíveis na tabela do Supabase.
 
-    Usado para popular seletores de período na interface, garantindo que o usuário
-    só selecione meses/anos para os quais há registros disponíveis no banco.
-
     Retorno:
-    - tuple: Dois elementos:
-        - list[int]: Lista de anos disponíveis, ordenada do mais recente ao mais antigo.
-        - list[int]: Lista de meses disponíveis, ordenada do menor (janeiro) ao maior (dezembro).
+    - tuple: (lista de anos, lista de meses)
     """
     url = f"{SUPABASE_URL}/rest/v1/{TABELA}?select=ano,mes"
     response = requests.get(url, headers=HEADERS)
@@ -247,8 +242,8 @@ def get_anos_meses_disponiveis():
             if df.empty:
                 return [], []
 
-            # Remove linhas com valores nulos e converte para inteiros
-            df = df.dropna(subset=["ano", "mes"]).astype({"ano": int, "mes": int})
+            # Garante que os campos sejam inteiros e remove duplicatas
+            df = df.dropna(subset=["ano", "mes"]).astype({"ano": int, "mes": int}).drop_duplicates()
 
             anos = sorted(df["ano"].unique(), reverse=True)
             meses = sorted(df["mes"].unique())
@@ -256,12 +251,12 @@ def get_anos_meses_disponiveis():
             return anos, meses
 
         except Exception as e:
-            print(f"Erro ao processar resposta JSON: {e}")
+            print(f"Erro ao processar JSON: {e}")
             return [], []
-
     else:
-        print(f"Erro ao consultar anos e meses disponíveis: Status {response.status_code}")
+        print(f"Erro HTTP {response.status_code} ao obter anos/meses.")
         return [], []
+
 
 
 
