@@ -58,11 +58,13 @@ for key, value in {
 def ir_para_mes_vigente():
     """Define a tela atual como 'mes_vigente'."""
     st.session_state["tela_atual"] = "mes_vigente"
+    st.session_state["modo_nova_conta"] = False
 
 
 def ir_para_historico():
     """Define a tela atual como 'historico'."""
     st.session_state["tela_atual"] = "historico"
+    st.session_state["modo_nova_conta"] = False
 
 
 def voltar_tela_inicial():
@@ -360,6 +362,8 @@ if st.session_state["tela_atual"] == "inicial":
             st.rerun()
         if st.button("Relatórios"):
             st.session_state["tela_atual"] = "relatorios"
+            st.session_state["grafico_comparativo_pronto"] = False
+            st.session_state["pdf_comparativo_pronto"] = False
             st.rerun()
 
 
