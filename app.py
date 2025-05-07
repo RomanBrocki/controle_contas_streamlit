@@ -457,16 +457,18 @@ else:
         conta_escolhida = st.selectbox("Conta", contas_disponiveis, key="conta_escolhida_comp")
 
         # Botões de ação
-        col_a, col_b = st.columns([1, 1])
+        col_a, col_b, col_c = st.columns(3)
         with col_a:
             if st.button("Gerar Gráfico"):
-                # Aqui no futuro: carregar dados do período e exibir gráfico
                 st.session_state["grafico_comparativo_pronto"] = True
 
         with col_b:
-            if st.button("Gerar PDF"):
-                # Aqui no futuro: carregar dados e gerar PDF
+            if st.button("Gerar PDF do Gráfico"):
                 st.session_state["pdf_comparativo_pronto"] = True
+
+        with col_c:
+            if st.button("Gerar Resumo do Período 📄"):
+                st.session_state["resumo_periodo_pronto"] = True
 
         # Exibição de gráfico real
         if st.session_state.get("grafico_comparativo_pronto", False):
