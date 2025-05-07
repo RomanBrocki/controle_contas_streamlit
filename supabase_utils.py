@@ -226,33 +226,32 @@ def carregar_mes_referente(mes, ano, delta_meses=0, delta_anos=0):
 
 def get_anos_meses_disponiveis():
     """
-    Retorna listas de anos e meses disponíveis, com base apenas no primeiro e último ano presentes no banco.
+    Retorna listas de anos e meses disponíveis, eliminando duplicatas via Python.
 
     Retorno:
     - tuple: (lista de anos, lista padrão de meses de 1 a 12)
     """
     try:
-        # Consulta com limite estendido
-        url = f"{SUPABASE_URL}/rest/v1/{TABELA}?select=ano&order=ano.asc&limit=1000"
+        url = f"{SUPABASE_URL}/rest/v1/{TABELA}?select=ano&limit=10000"
         response = requests.get(url, headers=HEADERS)
 
         if response.status_code == 200:
-            dados = [int(item["ano"]) for item in response.json() if str(item.get("ano")).isdigit()]
+            dados = response.json()
 
-            if not dados:
-                return [], []
+            anos = {
+                int(item["ano"]) for item in dados
+                if "ano" in item and str(item["ano"]).isdigit()
+            }
 
-            ano_min = min(dados)
-            ano_max = max(dados)
-
-            anos = list(range(ano_max, ano_min - 1, -1))  # do mais recente para o mais antigo
+            anos_ordenados = sorted(anos, reverse=True)
             meses = list(range(1, 13))
 
-            return anos, meses
+            return anos_ordenados, meses
 
     except Exception as e:
-        print(f"Erro ao obter anos baseados em range: {e}")
+        print(f"Erro ao obter anos com deduplicação manual: {e}")
         return [], []
+
 
 
 
