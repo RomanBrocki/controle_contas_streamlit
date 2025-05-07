@@ -226,36 +226,33 @@ def carregar_mes_referente(mes, ano, delta_meses=0, delta_anos=0):
 
 def get_anos_meses_disponiveis():
     """
-    Recupera os anos e meses distintos disponíveis na tabela do Supabase.
+    Retorna listas de anos e meses disponíveis, com base apenas no primeiro e último ano presentes no banco.
 
     Retorno:
-    - tuple: (lista de anos, lista de meses)
+    - tuple: (lista de anos, lista padrão de meses de 1 a 12)
     """
-    url = f"{SUPABASE_URL}/rest/v1/{TABELA}?select=ano,mes"
-    response = requests.get(url, headers=HEADERS)
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/{TABELA}?select=ano&order=ano.asc"
+        response = requests.get(url, headers=HEADERS)
 
-    if response.status_code == 200:
-        try:
-            dados = response.json()
-            df = pd.DataFrame(dados)
+        if response.status_code == 200:
+            dados = [int(item["ano"]) for item in response.json() if str(item.get("ano")).isdigit()]
 
-            if df.empty:
+            if not dados:
                 return [], []
 
-            # Garante que os campos sejam inteiros e remove duplicatas
-            df = df.dropna(subset=["ano", "mes"]).astype({"ano": int, "mes": int}).drop_duplicates()
+            ano_min = min(dados)
+            ano_max = max(dados)
 
-            anos = sorted(df["ano"].unique(), reverse=True)
-            meses = sorted(df["mes"].unique())
+            anos = list(range(ano_max, ano_min - 1, -1))  # do mais novo para o mais antigo
+            meses = list(range(1, 13))  # janeiro a dezembro
 
             return anos, meses
 
-        except Exception as e:
-            print(f"Erro ao processar JSON: {e}")
-            return [], []
-    else:
-        print(f"Erro HTTP {response.status_code} ao obter anos/meses.")
+    except Exception as e:
+        print(f"Erro ao obter anos baseados em range: {e}")
         return [], []
+
 
 
 
