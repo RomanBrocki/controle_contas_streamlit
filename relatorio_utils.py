@@ -454,7 +454,8 @@ def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_
     - matplotlib.figure.Figure: Objeto da figura com o gráfico pronto
     """
 
-    
+    import matplotlib.pyplot as plt
+
     if df.empty or "mes" not in df.columns or "ano" not in df.columns or "valor_total" not in df.columns:
         raise ValueError("DataFrame de entrada está vazio ou incompleto.")
 
@@ -469,9 +470,16 @@ def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.plot(df["periodo"], df["valor_total"], marker="o", linestyle="-", color="#4FC3F7")
 
-    # Rótulos de valor sobre cada ponto
+    # Ajuste do eixo Y: começa em 0, com margem superior
+    y_max = df["valor_total"].max()
+    margem = (y_max * 0.1) if y_max > 0 else 10
+    ax.set_ylim(bottom=0, top=y_max + margem)
+
+    # Rótulos alternados (acima e abaixo dos pontos)
     for i, valor in enumerate(df["valor_total"]):
-        ax.text(i, valor + 1, f"R$ {valor:.2f}", ha='center', va='bottom', fontsize=9)
+        deslocamento = 8 if i % 2 == 0 else -12
+        va = 'bottom' if deslocamento > 0 else 'top'
+        ax.text(i, valor + deslocamento, f"R$ {valor:.2f}", ha='center', va=va, fontsize=8)
 
     # Título dinâmico
     titulo = f"Comparativo de conta '{nome_conta}' - {mes_inicio:02d}/{ano_inicio} a {mes_fim:02d}/{ano_fim}"
@@ -482,9 +490,9 @@ def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_
 
     plt.xticks(rotation=45)
     plt.tight_layout()
-    
 
     return fig
+
 
 # =====================================================
 # 📄 Gerar PDF comparativo de uma conta no tempo
@@ -506,9 +514,6 @@ def gerar_pdf_comparativo_conta(df, nome_conta, mes_inicio, ano_inicio, mes_fim,
     Retorno:
     - BytesIO: Buffer contendo o PDF pronto para download
     """
-    import os
-    from io import BytesIO
-    from fpdf import FPDF
 
     # -----------------------------
     # 📊 Gerar gráfico e salvar temporariamente
