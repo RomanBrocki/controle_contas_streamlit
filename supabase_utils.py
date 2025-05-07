@@ -232,7 +232,8 @@ def get_anos_meses_disponiveis():
     - tuple: (lista de anos, lista padrão de meses de 1 a 12)
     """
     try:
-        url = f"{SUPABASE_URL}/rest/v1/{TABELA}?select=ano&order=ano.asc"
+        # Consulta com limite estendido
+        url = f"{SUPABASE_URL}/rest/v1/{TABELA}?select=ano&order=ano.asc&limit=1000"
         response = requests.get(url, headers=HEADERS)
 
         if response.status_code == 200:
@@ -244,14 +245,15 @@ def get_anos_meses_disponiveis():
             ano_min = min(dados)
             ano_max = max(dados)
 
-            anos = list(range(ano_max, ano_min - 1, -1))  # do mais novo para o mais antigo
-            meses = list(range(1, 13))  # janeiro a dezembro
+            anos = list(range(ano_max, ano_min - 1, -1))  # do mais recente para o mais antigo
+            meses = list(range(1, 13))
 
             return anos, meses
 
     except Exception as e:
         print(f"Erro ao obter anos baseados em range: {e}")
         return [], []
+
 
 
 
