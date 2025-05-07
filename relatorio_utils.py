@@ -439,73 +439,59 @@ def carregar_dados_conta_periodo(mes_inicio, ano_inicio, mes_fim, ano_fim, nome_
 
 def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_fim, ano_fim):
     """
-    Gera um gráfico de linha com pontos para visualização da variação do valor total
-    de uma conta específica ao longo de um intervalo de meses, com ajuste inteligente
-    da escala do eixo Y para melhor leitura visual.
-
-    Parâmetros:
-    - df (pd.DataFrame): DataFrame com colunas ['ano', 'mes', 'valor_total']
-    - nome_conta (str): Nome da conta (ex: 'Luz')
-    - mes_inicio (int): Mês inicial (1 a 12)
-    - ano_inicio (int): Ano inicial
-    - mes_fim (int): Mês final (1 a 12)
-    - ano_fim (int): Ano final
-
-    Retorno:
-    - matplotlib.figure.Figure: Objeto da figura com o gráfico pronto
+    Gera um gráfico de linha visualmente limpo para exibir a variação de uma conta específica
+    ao longo de um intervalo de meses, com escala ajustada automaticamente e estética minimalista.
     """
     import matplotlib.pyplot as plt
 
     if df.empty or "mes" not in df.columns or "ano" not in df.columns or "valor_total" not in df.columns:
         raise ValueError("DataFrame de entrada está vazio ou incompleto.")
 
-    # Conversões necessárias
     df["mes"] = df["mes"].astype(int)
     df["ano"] = df["ano"].astype(int)
-
-    # Cria coluna de rótulo do eixo X no formato MM/AAAA
     df["periodo"] = df.apply(lambda row: f"{int(row['mes']):02d}/{int(row['ano'])}", axis=1)
 
-    # Início do gráfico
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(df["periodo"], df["valor_total"], marker="o", linestyle="-", color="#4FC3F7")
+    fig, ax = plt.subplots(figsize=(10, 4))
+    ax.plot(df["periodo"], df["valor_total"], marker="o", linestyle="-", color="#4FC3F7", linewidth=2)
 
-    # Escala adaptativa do eixo Y
+    # Escala dinâmica (sem base zero, nem espaço exagerado)
     y_min = df["valor_total"].min()
     y_max = df["valor_total"].max()
-    amplitude = y_max - y_min
-    percentual_variacao = amplitude / y_max if y_max else 0
+    margem_superior = (y_max - y_min) * 0.08 if y_max > y_min else 10
+    margem_inferior = (y_max - y_min) * 0.1 if y_max > y_min else 5
 
-    if percentual_variacao < 0.2:
-        # Pouca variação: dar "zoom" com margens adaptativas
-        margem_inferior = amplitude * 0.4
-        margem_superior = amplitude * 0.2
-        ax.set_ylim(
-            bottom=max(0, y_min - margem_inferior),
-            top=y_max + margem_superior
-        )
-    else:
-        # Muita variação: manter proporcionalidade
-        margem_superior = amplitude * 0.1
-        ax.set_ylim(bottom=0, top=y_max + margem_superior)
+    ax.set_ylim(
+        bottom=max(0, y_min - margem_inferior),
+        top=y_max + margem_superior
+    )
 
-    # Rótulos alternados (acima e abaixo dos pontos)
+    # Rótulos alternando acima/abaixo dos pontos
     for i, valor in enumerate(df["valor_total"]):
-        deslocamento = 8 if i % 2 == 0 else -12
+        deslocamento = 6 if i % 2 == 0 else -10
         va = 'bottom' if deslocamento > 0 else 'top'
         ax.text(i, valor + deslocamento, f"R$ {valor:.2f}", ha='center', va=va, fontsize=9)
 
-    # Título dinâmico
+    # Título
     titulo = f"Comparativo de conta '{nome_conta}' - {mes_inicio:02d}/{ano_inicio} a {mes_fim:02d}/{ano_fim}"
-    ax.set_title(titulo, fontsize=14)
-    ax.set_ylabel("Valor (R$)")
-    ax.set_xlabel("Período")
-    ax.grid(True, linestyle="--", alpha=0.4)
+    ax.set_title(titulo, fontsize=14, pad=20)
+
+    # Limpeza estética
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.spines["bottom"].set_color("#888888")  # manter apenas linha do eixo X
+
+    ax.tick_params(left=False, right=False)
+    ax.set_yticks([])  # remove marcações do Y
+    ax.set_ylabel("")
+    ax.set_xlabel("")
+    ax.grid(False)
 
     plt.xticks(rotation=45)
     plt.tight_layout()
 
     return fig
+
 
 
 
