@@ -440,7 +440,8 @@ def carregar_dados_conta_periodo(mes_inicio, ano_inicio, mes_fim, ano_fim, nome_
 def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_fim, ano_fim):
     """
     Gera um gráfico de linha com pontos para visualização da variação do valor total
-    de uma conta específica ao longo de um intervalo de meses.
+    de uma conta específica ao longo de um intervalo de meses, com ajuste inteligente
+    da escala do eixo Y para melhor leitura visual.
 
     Parâmetros:
     - df (pd.DataFrame): DataFrame com colunas ['ano', 'mes', 'valor_total']
@@ -453,7 +454,6 @@ def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_
     Retorno:
     - matplotlib.figure.Figure: Objeto da figura com o gráfico pronto
     """
-
     import matplotlib.pyplot as plt
 
     if df.empty or "mes" not in df.columns or "ano" not in df.columns or "valor_total" not in df.columns:
@@ -470,16 +470,30 @@ def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.plot(df["periodo"], df["valor_total"], marker="o", linestyle="-", color="#4FC3F7")
 
-    # Ajuste do eixo Y: começa em 0, com margem superior
+    # Escala adaptativa do eixo Y
+    y_min = df["valor_total"].min()
     y_max = df["valor_total"].max()
-    margem = (y_max * 0.1) if y_max > 0 else 10
-    ax.set_ylim(bottom=0, top=y_max + margem)
+    amplitude = y_max - y_min
+    percentual_variacao = amplitude / y_max if y_max else 0
+
+    if percentual_variacao < 0.2:
+        # Pouca variação: dar "zoom" com margens adaptativas
+        margem_inferior = amplitude * 0.4
+        margem_superior = amplitude * 0.2
+        ax.set_ylim(
+            bottom=max(0, y_min - margem_inferior),
+            top=y_max + margem_superior
+        )
+    else:
+        # Muita variação: manter proporcionalidade
+        margem_superior = amplitude * 0.1
+        ax.set_ylim(bottom=0, top=y_max + margem_superior)
 
     # Rótulos alternados (acima e abaixo dos pontos)
     for i, valor in enumerate(df["valor_total"]):
         deslocamento = 8 if i % 2 == 0 else -12
         va = 'bottom' if deslocamento > 0 else 'top'
-        ax.text(i, valor + deslocamento, f"R$ {valor:.2f}", ha='center', va=va, fontsize=8)
+        ax.text(i, valor + deslocamento, f"R$ {valor:.2f}", ha='center', va=va, fontsize=9)
 
     # Título dinâmico
     titulo = f"Comparativo de conta '{nome_conta}' - {mes_inicio:02d}/{ano_inicio} a {mes_fim:02d}/{ano_fim}"
@@ -492,6 +506,7 @@ def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_
     plt.tight_layout()
 
     return fig
+
 
 
 # =====================================================
