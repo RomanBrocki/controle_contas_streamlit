@@ -224,33 +224,41 @@ def carregar_mes_referente(mes, ano, delta_meses=0, delta_anos=0):
 # 📅 LISTAR ANOS E MESES DISPONÍVEIS
 # ==============================
 
+from datetime import datetime
+
 def get_anos_meses_disponiveis():
     """
-    Retorna listas de anos e meses disponíveis, eliminando duplicatas via Python.
+    Retorna os anos de primeiro registro até o ano atual, e os meses de 1 a 12.
 
     Retorno:
-    - tuple: (lista de anos, lista padrão de meses de 1 a 12)
+    - tuple: (lista de anos, lista de meses)
     """
     try:
-        url = f"{SUPABASE_URL}/rest/v1/{TABELA}?select=ano&limit=10000"
+        url = f"{SUPABASE_URL}/rest/v1/{TABELA}?select=ano&order=ano.asc&limit=10000"
         response = requests.get(url, headers=HEADERS)
 
         if response.status_code == 200:
             dados = response.json()
-
-            anos = {
+            anos_extraidos = [
                 int(item["ano"]) for item in dados
                 if "ano" in item and str(item["ano"]).isdigit()
-            }
+            ]
 
-            anos_ordenados = sorted(anos, reverse=True)
+            if not anos_extraidos:
+                return [], []
+
+            primeiro_ano = min(anos_extraidos)
+            ano_atual = datetime.now().year
+
+            anos = list(range(ano_atual, primeiro_ano - 1, -1))  # mais recente primeiro
             meses = list(range(1, 13))
 
-            return anos_ordenados, meses
+            return anos, meses
 
     except Exception as e:
-        print(f"Erro ao obter anos com deduplicação manual: {e}")
+        print(f"Erro ao montar intervalo de anos baseados em today: {e}")
         return [], []
+
 
 
 
