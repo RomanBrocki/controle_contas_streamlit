@@ -454,8 +454,7 @@ def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_
     - matplotlib.figure.Figure: Objeto da figura com o gráfico pronto
     """
 
-    import matplotlib.pyplot as plt
-
+    
     if df.empty or "mes" not in df.columns or "ano" not in df.columns or "valor_total" not in df.columns:
         raise ValueError("DataFrame de entrada está vazio ou incompleto.")
 
@@ -483,7 +482,7 @@ def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_
 
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.style.use("dark_background")
+    
 
     return fig
 
