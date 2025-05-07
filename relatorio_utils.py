@@ -469,7 +469,7 @@ def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_
     for i, valor in enumerate(df["valor_total"]):
         deslocamento = 6 if i % 2 == 0 else -10
         va = 'bottom' if deslocamento > 0 else 'top'
-        ax.text(i, valor + deslocamento, f"R$ {valor:.2f}", ha='center', va=va, fontsize=9)
+        ax.text(i, valor + deslocamento, f"R$ {valor:.2f}", ha='center', va=va, fontsize=8)
 
     # Título
     titulo = f"Comparativo de conta '{nome_conta}' - {mes_inicio:02d}/{ano_inicio} a {mes_fim:02d}/{ano_fim}"
