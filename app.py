@@ -15,7 +15,8 @@ from relatorio_utils import (
     gerar_relatorio_pdf, 
     gerar_grafico_comparativo_linha, 
     carregar_dados_conta_periodo, 
-    gerar_pdf_comparativo_conta
+    gerar_pdf_comparativo_conta,
+    gerar_relatorio_periodo_pdf
 )
 from supabase_utils import (
     carregar_tabela,
@@ -422,17 +423,18 @@ else:
                 st.session_state["ano_historico"],
                 mes_selecionado,
             )
+
     # --------------------------
     # 📊 Tela: Relatórios
     # --------------------------
     elif st.session_state["tela_atual"] == "relatorios":
         st.button("Voltar", on_click=voltar_tela_inicial)
-        st.header("📊 Relatórios")
+        
 
         # --------------------------
         # 📈 Seção: Comparativo de Conta por Período
         # --------------------------
-        st.subheader("📈 Comparativo de Conta por Período")
+        st.subheader("📈 Contas por Período")
 
         # Obter anos e meses disponíveis no banco
         anos_disponiveis, meses_disponiveis = get_anos_meses_disponiveis()
@@ -440,6 +442,10 @@ else:
         if not anos_disponiveis or not meses_disponiveis:
             st.warning("Não há dados disponíveis para gerar comparativos.")
             st.stop()
+
+        # Reseta o gráfico ao mudar de conta
+        def ao_mudar_conta():
+            st.session_state["grafico_comparativo_pronto"] = False
 
         # Linha de seleção de período e conta
         col1, col2, col3, col4 = st.columns(4)
@@ -455,13 +461,13 @@ else:
         # Seletor da conta
         contas_disponiveis = get_nomes_conta_unicos()
         conta_escolhida = st.selectbox("Conta", contas_disponiveis, key="conta_escolhida_comp")
-
+        
         # Botões de ação
         col_a, col_b, col_c = st.columns(3)
         with col_a:
             if st.button("Gerar Gráfico"):
                 st.session_state["grafico_comparativo_pronto"] = True
-
+                
         with col_b:
             if st.button("Gerar PDF do Gráfico"):
                 st.session_state["pdf_comparativo_pronto"] = True
@@ -469,10 +475,13 @@ else:
         with col_c:
             if st.button("Gerar Resumo do Período 📄"):
                 st.session_state["resumo_periodo_pronto"] = True
-
-        # Exibição de gráfico real
+                
+        # =============================
+        # 📈 Geração do gráfico de linha
+        # =============================
         if st.session_state.get("grafico_comparativo_pronto", False):
-            # Carrega dados do período
+            st.session_state["grafico_comparativo_pronto"] = False  # limpa a flag após usar
+
             df_comparativo = carregar_dados_conta_periodo(
                 mes_inicio, ano_inicio,
                 mes_fim, ano_fim,
@@ -482,7 +491,6 @@ else:
             if df_comparativo.empty:
                 st.warning("Nenhum dado encontrado para o período selecionado.")
             else:
-                # Gera o gráfico
                 fig = gerar_grafico_comparativo_linha(
                     df_comparativo,
                     conta_escolhida,
@@ -491,43 +499,70 @@ else:
                     mes_fim,
                     ano_fim
                 )
-                # Exibe o gráfico no Streamlit
                 st.pyplot(fig)
 
-            # Geração de PDF do gráfico comparativo
-            if st.session_state.get("pdf_comparativo_pronto", False):
-                # Resetar flag para não gerar várias vezes
-                st.session_state["pdf_comparativo_pronto"] = False
+        # =============================
+        # 📄 Geração do PDF do gráfico
+        # =============================
+        if st.session_state.get("pdf_comparativo_pronto", False):
+            st.session_state["pdf_comparativo_pronto"] = False
 
-                # Carrega os dados do mesmo período e conta
-                df_pdf = carregar_dados_conta_periodo(
-                    mes_inicio, ano_inicio,
-                    mes_fim, ano_fim,
-                    conta_escolhida
+            df_pdf = carregar_dados_conta_periodo(
+                mes_inicio, ano_inicio,
+                mes_fim, ano_fim,
+                conta_escolhida
+            )
+
+            if df_pdf.empty:
+                st.warning("Não foi possível gerar o PDF. Nenhum dado encontrado.")
+            else:
+                pdf_bytes = gerar_pdf_comparativo_conta(
+                    df_pdf,
+                    conta_escolhida,
+                    mes_inicio,
+                    ano_inicio,
+                    mes_fim,
+                    ano_fim
+                )
+                nome_arquivo = f"relatorio_{conta_escolhida.lower()}_{mes_inicio:02d}{ano_inicio}_{mes_fim:02d}{ano_fim}.pdf"
+                st.download_button(
+                    label="📄 Baixar PDF do Comparativo",
+                    data=pdf_bytes,
+                    file_name=nome_arquivo,
+                    mime="application/pdf"
                 )
 
-                if df_pdf.empty:
-                    st.warning("Não foi possível gerar o PDF. Nenhum dado encontrado no período selecionado.")
-                else:
-                    # Gera o PDF
-                    pdf_bytes = gerar_pdf_comparativo_conta(
-                        df_pdf,
-                        conta_escolhida,
-                        mes_inicio,
-                        ano_inicio,
-                        mes_fim,
-                        ano_fim
-                    )
+        # =============================
+        # 🧾 Geração do Resumo do Período
+        # =============================
+        if st.session_state.get("resumo_periodo_pronto", False):
+            st.session_state["resumo_periodo_pronto"] = False
 
-                    nome_arquivo = f"relatorio_{conta_escolhida.lower()}_{mes_inicio:02d}{ano_inicio}_{mes_fim:02d}{ano_fim}.pdf"
+            df_periodo = carregar_dados_conta_periodo(
+                mes_inicio, ano_inicio,
+                mes_fim, ano_fim,
+                nome_da_conta=None  # todas as contas
+            )
 
-                    # Botão para download
-                    st.download_button(
-                        label="📄 Baixar PDF do Comparativo",
-                        data=pdf_bytes,
-                        file_name=nome_arquivo,
-                        mime="application/pdf"
-                    )
+            if df_periodo.empty:
+                st.warning("Não há contas registradas no intervalo selecionado.")
+            else:
+                st.success("Resumo do período carregado com sucesso!")
+                pdf_bytes = gerar_relatorio_periodo_pdf(
+                    df_periodo,
+                    mes_inicio,
+                    ano_inicio,
+                    mes_fim,
+                    ano_fim
+                )
+                nome_arquivo = f"relatorio_resumo_{mes_inicio:02d}{ano_inicio}_{mes_fim:02d}{ano_fim}.pdf"
+                st.download_button(
+                    label="📄 Baixar PDF do Resumo",
+                    data=pdf_bytes,
+                    file_name=nome_arquivo,
+                    mime="application/pdf"
+                )
+
 
 
 
