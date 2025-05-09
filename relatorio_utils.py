@@ -34,7 +34,6 @@ class PDF(FPDF):
         self.set_font("Arial", size=10)
 
 
-
 # =====================================================
 # 📊 Gráfico comparativo duplo: mês anterior e ano anterior
 # =====================================================
@@ -102,7 +101,14 @@ def gerar_grafico_comparativo_duplo(df_atual, df_mes_anterior, df_ano_passado, n
         ax.set_yticklabels(contas_desejadas)
         ax.invert_yaxis()
         ax.set_title(titulo)
-        ax.legend(loc='lower right')
+        # Criação da legenda com ordem customizada
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(
+            handles[::-1], labels[::-1],  # inverte ordem: Atual em cima
+            loc='lower right',
+            fontsize=9
+        )
+
 
     # ------------------------
     # Títulos e rótulos de tempo
@@ -122,7 +128,7 @@ def gerar_grafico_comparativo_duplo(df_atual, df_mes_anterior, df_ano_passado, n
         ax1, df_anterior,
         col_ref="Anterior", col_atual="Atual",
         titulo=f"Comparativo com {mes_ano_anterior}",
-        cor_ref="#1f77b4", cor_atual="#ff7f0e",
+        cor_ref="#f58518", cor_atual="#4c78a8",
         label_atual=atual_label, label_ref=mes_ano_anterior,
     )
 
@@ -130,14 +136,72 @@ def gerar_grafico_comparativo_duplo(df_atual, df_mes_anterior, df_ano_passado, n
         ax2, df_ano,
         col_ref="Ano Passado", col_atual="Atual",
         titulo=f"Comparativo com {ano_anterior}",
-        cor_ref="#1f77b4", cor_atual="#ff7f0e",
+        cor_ref="#54a24b", cor_atual="#4c78a8",
         label_atual=atual_label, label_ref=ano_anterior
     )
-
+    
     plt.tight_layout()
     plt.savefig(nome_arquivo)
     plt.close()
     return nome_arquivo
+
+# ======================================================================================
+# Funções de suporte para gerar_relatorio_pdf e gerar_relatorio_periodo_pdf
+# ======================================================================================
+
+def gerar_grafico_pizza_periodo(df, nome_arquivo):
+    categorias = df.groupby('nome_da_conta')['valor'].sum().sort_values(ascending=False)
+    total_gastos = categorias.sum()
+
+    if len(categorias) > 6:
+        top5 = categorias.head(5)
+        outros = categorias.iloc[5:].sum()
+        categorias_ordenadas = pd.concat([top5, pd.Series({'Outros': outros})])
+    else:
+        categorias_ordenadas = categorias
+
+    explode = [0.01 + (v / categorias_ordenadas.max()) * 0.1 for v in categorias_ordenadas]
+
+    fig, ax = plt.subplots(figsize=(7, 6))
+    wedges, _, _ = ax.pie(
+        categorias_ordenadas,
+        startangle=90,
+        explode=explode,
+        labels=None,
+        autopct=lambda pct: f'{pct:.1f}%',
+        textprops=dict(color="white", fontsize=8),
+        pctdistance=0.7,
+        radius=0.85,
+    )
+    pos = ax.get_position()
+    ax.set_position([pos.x0 - 0.07, pos.y0, pos.width, pos.height])
+
+    for i, p in enumerate(wedges):
+        ang = (p.theta2 - p.theta1)/2. + p.theta1
+        x = np.cos(np.deg2rad(ang))
+        y = np.sin(np.deg2rad(ang))
+        valor = categorias_ordenadas.iloc[i]
+        ax.annotate(
+            f'{categorias_ordenadas.index[i]}: R$ {valor:,.2f}'.replace('.', ','),
+            xy=(x, y), xytext=(1.2*x, 1.2*y),
+            ha='center', va='center',
+            arrowprops=dict(arrowstyle='-'),
+            fontsize=8,
+            color='black'
+        )
+
+    plt.title("Gastos por Categoria no Período")
+    plt.tight_layout()
+    plt.savefig(nome_arquivo)
+    plt.close()
+    return nome_arquivo
+
+def filtrar_contas_repetidas(df):
+    return df["nome_da_conta"].value_counts()[lambda x: x > 1].index.tolist()
+
+def agrupar_por_mes(df):
+    df["chave"] = df["ano"].astype(str) + "-" + df["mes"].astype(str).str.zfill(2)
+    return df.groupby(["ano", "mes"]).apply(lambda g: g.to_dict(orient="records")).to_dict()
 
 
 
@@ -176,6 +240,7 @@ def gerar_relatorio_pdf(df_atual, nome_mes, ano):
     df_ano_passado = carregar_mes_referente(
         df_atual.iloc[0]['mes'], df_atual.iloc[0]['ano'], delta_anos=-1
     )
+    
     # -----------------------------
     # 🧹 Pré-processamento dos dados
     # -----------------------------
@@ -184,12 +249,14 @@ def gerar_relatorio_pdf(df_atual, nome_mes, ano):
     df['valor'] = pd.to_numeric(df['valor'], errors='coerce').fillna(0.0)
 
     # -----------------------------
-    # 💰 Cálculo dos totais por pagador
+    # 💰 Cálculo dos totais
     # -----------------------------
     totais = df.groupby('quem_pagou')['valor'].sum().to_dict()
     total_roman = totais.get('Roman', 0.0)
     total_tati = totais.get('Tati', 0.0)
     total_outros = totais.get('Outro', 0.0)
+    categorias = df.groupby('nome_da_conta')['valor'].sum().sort_values(ascending=False)
+    total_gastos = categorias.sum()
 
     # -----------------------------
     # 🔄 Cálculo dos débitos em contas divididas
@@ -208,40 +275,10 @@ def gerar_relatorio_pdf(df_atual, nome_mes, ano):
 
     # -----------------------------
     # 📊 Geração do gráfico de pizza por categoria
-    # -----------------------------
-    categorias = df.groupby('nome_da_conta')['valor'].sum().sort_values(ascending=False)
-    total_gastos = categorias.sum()
-
-    # Agrupar categorias menores como 'Outros'
-    if len(categorias) > 6:
-        top5 = categorias.head(5)
-        outros = categorias.iloc[5:].sum()
-        categorias_ordenadas = pd.concat([top5, pd.Series({'Outros': outros})])
-    else:
-        categorias_ordenadas = categorias
-
-    # Criar figura de gráfico de pizza
-    fig, ax = plt.subplots(figsize=(7, 6))
-    explode = [0.1 if v == categorias_ordenadas.max() else 0 for v in categorias_ordenadas]
-    categorias_ordenadas.plot(
-        kind="pie",
-        startangle=90,
-        ax=ax,
-        explode=explode,
-        label=""
-    )
-    ax.legend(
-        labels=[f"{cat} (R$ {val:,.2f})".replace('.', ',') for cat, val in categorias_ordenadas.items()],
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.15),
-        ncol=2
-    )
-
-    plt.title(f"Gastos por Categoria - {nome_mes}/{ano}")
     grafico_path = "grafico_pizza.png"
-    plt.tight_layout()
-    plt.savefig(grafico_path)
-    plt.close()
+    gerar_grafico_pizza_periodo(df, grafico_path)
+
+
 
     # -----------------------------
     # 📊 Geração do gráfico comparativo duplo
@@ -378,60 +415,66 @@ def gerar_relatorio_pdf(df_atual, nome_mes, ano):
 
 def carregar_dados_conta_periodo(mes_inicio, ano_inicio, mes_fim, ano_fim, nome_da_conta):
     """
-    Carrega os dados de uma conta específica ao longo de um intervalo de meses,
-    filtrando diretamente na API Supabase e agrupando os resultados por mês e ano.
+    Carrega os dados de uma conta específica ou de todas as contas ao longo de um intervalo de meses.
 
     Parâmetros:
     - mes_inicio (int): Mês inicial (1–12)
     - ano_inicio (int): Ano inicial (ex: 2024)
     - mes_fim (int): Mês final (1–12)
     - ano_fim (int): Ano final (ex: 2025)
-    - nome_da_conta (str): Nome da conta a ser filtrada
+    - nome_da_conta (str | None): Nome da conta a ser filtrada. Se None, retorna todas as contas.
 
     Retorno:
-    - pd.DataFrame: DataFrame com colunas ['ano', 'mes', 'valor_total']
+    - pd.DataFrame:
+        - Se nome_da_conta for fornecido: DataFrame com ['ano', 'mes', 'valor_total']
+        - Se nome_da_conta for None: DataFrame original com todos os campos das contas
     """
-    # Garante que a data inicial seja anterior à final
     data_inicio = datetime(ano_inicio, mes_inicio, 1)
     data_fim = datetime(ano_fim, mes_fim, 1)
 
     if data_inicio > data_fim:
-        data_inicio, data_fim = data_fim, data_inicio  # Inverte se necessário
+        data_inicio, data_fim = data_fim, data_inicio
 
-    # Lista todas as combinações de mês/ano no intervalo
-    data_atual = data_inicio
     registros = []
+    data_atual = data_inicio
 
     while data_atual <= data_fim:
         mes = data_atual.month
         ano = data_atual.year
-
         df_mes = carregar_tabela(mes, ano)
 
         if not df_mes.empty:
-            df_filtrado = df_mes[df_mes["nome_da_conta"] == nome_da_conta].copy()
+            if nome_da_conta is not None:
+                df_filtrado = df_mes[df_mes["nome_da_conta"] == nome_da_conta].copy()
+            else:
+                df_filtrado = df_mes.copy()
+
             df_filtrado["mes"] = mes
             df_filtrado["ano"] = ano
             registros.append(df_filtrado)
 
-        # Avança um mês
         data_atual += relativedelta(months=1)
 
     if not registros:
-        return pd.DataFrame(columns=["ano", "mes", "valor_total"])
+        return pd.DataFrame()
 
     df_todos = pd.concat(registros, ignore_index=True)
     df_todos["valor"] = pd.to_numeric(df_todos["valor"], errors="coerce").fillna(0)
 
-    df_agrupado = (
-        df_todos.groupby(["ano", "mes"])["valor"]
-        .sum()
-        .reset_index()
-        .rename(columns={"valor": "valor_total"})
-        .sort_values(by=["ano", "mes"])
-    )
+    # Caso o nome da conta tenha sido informado → retorna o DataFrame agrupado
+    if nome_da_conta is not None:
+        df_agrupado = (
+            df_todos.groupby(["ano", "mes"])["valor"]
+            .sum()
+            .reset_index()
+            .rename(columns={"valor": "valor_total"})
+            .sort_values(by=["ano", "mes"])
+        )
+        return df_agrupado
 
-    return df_agrupado
+    # Caso contrário, retorna todos os dados originais para geração de relatório
+    return df_todos
+
 
 # =====================================================
 # 📈 Gerar gráfico de linha comparativo de conta por período
@@ -465,15 +508,21 @@ def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_
         top=y_max + margem_superior
     )
 
-    # Rótulos alternando acima/abaixo dos pontos
+    # Rótulos afastados dos pontos
     for i, valor in enumerate(df["valor_total"]):
-        deslocamento = 6 if i % 2 == 0 else -10
+        deslocamento = 12 if i % 2 == 0 else -16
         va = 'bottom' if deslocamento > 0 else 'top'
-        ax.text(i, valor + deslocamento, f"R$ {valor:.2f}", ha='center', va=va, fontsize=8)
+        ax.text(i, valor + deslocamento, f"R$ {valor:.2f}", ha='center', va=va, fontsize=9)
+
 
     # Título
     titulo = f"Comparativo de conta '{nome_conta}' - {mes_inicio:02d}/{ano_inicio} a {mes_fim:02d}/{ano_fim}"
-    ax.set_title(titulo, fontsize=14, pad=20)
+    ax.set_title(titulo, fontsize=14, pad=40)  # aumenta distância do gráfico para o topo
+    # Linha de média
+    media = df["valor_total"].mean()
+    ax.axhline(media, linestyle="--", color="gray", linewidth=1.2, label=f"Média da conta: R$ {media:.2f}")
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.20), fontsize=9, frameon=False)
+
 
     # Limpeza estética
     ax.spines["top"].set_visible(False)
@@ -557,6 +606,112 @@ def gerar_pdf_comparativo_conta(df, nome_conta, mes_inicio, ano_inicio, mes_fim,
     # Limpar imagem temporária
     if os.path.exists(caminho_img):
         os.remove(caminho_img)
+
+    return buffer
+
+def gerar_relatorio_periodo_pdf(df, mes_inicio, ano_inicio, mes_fim, ano_fim):
+    """
+    Gera um PDF contendo o resumo financeiro de um período completo, incluindo:
+    - Gráfico de pizza com distribuição por categoria (maiores contas + "Outros")
+    - Gráficos de linha por conta (apenas as que aparecem mais de uma vez, até 3 por página)
+    - Listagem de contas agrupadas por mês com valores, pagador e links clicáveis
+
+    Parâmetros:
+        df (pd.DataFrame): DataFrame contendo as contas do período
+        mes_inicio (int): Mês inicial do intervalo
+        ano_inicio (int): Ano inicial do intervalo
+        mes_fim (int): Mês final do intervalo
+        ano_fim (int): Ano final do intervalo
+
+    Retorno:
+        BytesIO: PDF final gerado, pronto para download
+    """
+    if df.empty:
+        return None
+
+    df['valor'] = pd.to_numeric(df['valor'], errors='coerce').fillna(0.0)
+    df = df.copy()
+
+    arquivos_temp = []
+
+    # Gráfico de pizza
+    grafico_pizza_path = "pizza_periodo.png"
+    gerar_grafico_pizza_periodo(df, grafico_pizza_path)
+    arquivos_temp.append(grafico_pizza_path)
+
+    # PDF inicial
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, f"Resumo Financeiro: {mes_inicio:02d}/{ano_inicio} a {mes_fim:02d}/{ano_fim}", ln=True, align="C")
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, f"Gerado em {pd.Timestamp.now().strftime('%d/%m/%Y')}", ln=True, align="C")
+    pdf.image(grafico_pizza_path, x=10, y=40, w=180)
+    pdf.set_y(130)
+
+    # Gráficos de linha para contas recorrentes (até 3 por página)
+    contas_validas = filtrar_contas_repetidas(df)
+    graficos_por_pagina = 3
+    imagens = []
+
+    for conta in contas_validas:
+        df_conta = df[df["nome_da_conta"] == conta]
+        df_conta = (
+            df_conta.groupby(["ano", "mes"])["valor"]
+            .sum()
+            .reset_index()
+            .rename(columns={"valor": "valor_total"})
+            .sort_values(by=["ano", "mes"])
+        )
+        fig = gerar_grafico_comparativo_linha(df_conta, conta, mes_inicio, ano_inicio, mes_fim, ano_fim)
+        caminho_img = f"linha_{conta}.png"
+        fig.savefig(caminho_img)
+        plt.close(fig)
+        imagens.append(caminho_img)
+        arquivos_temp.append(caminho_img)
+
+    for i in range(0, len(imagens), graficos_por_pagina):
+        pdf.add_page()
+        for j, img_path in enumerate(imagens[i:i+graficos_por_pagina]):
+            y_pos = 30 + j * 85
+            pdf.image(img_path, x=10, y=y_pos, w=190)
+
+    # Listagem agrupada por mês
+    agrupado = agrupar_por_mes(df)
+    for (ano, mes) in sorted(agrupado.keys()):
+        pdf.add_page()
+        pdf.set_font("Arial", "B", 14)
+        nome_mes = pd.Timestamp(year=ano, month=mes, day=1).strftime("%B").capitalize()
+        pdf.cell(0, 10, f"{nome_mes}/{ano}", ln=True)
+
+        pdf.set_font("Arial", size=9)
+        for row in agrupado[(ano, mes)]:
+            nome = row["nome_da_conta"]
+            instancia = row.get("instancia", "")
+            quem_pagou = row.get("quem_pagou", "")
+            valor_fmt = f"R$ {row['valor']:,.2f}".replace(".", ",")
+            nome_exibido = f"{nome} ({instancia})" if instancia else nome
+
+            pdf.cell(80, 6, nome_exibido, border=0)
+            pdf.cell(26, 6, valor_fmt, border=0)
+            pdf.cell(30, 6, f"Pagador: {quem_pagou}", border=0)
+
+            if row.get("link_boleto"):
+                pdf.write_link_inline("Boleto", row["link_boleto"])
+            if row.get("link_comprovante"):
+                pdf.write_link_inline("Comprovante", row["link_comprovante"])
+
+            pdf.ln(6)
+        pdf.ln(3)
+
+    buffer = BytesIO()
+    pdf.output(buffer)
+    buffer.seek(0)
+
+    # Limpa os arquivos temporários criados
+    for path in arquivos_temp:
+        if os.path.exists(path):
+            os.remove(path)
 
     return buffer
 
