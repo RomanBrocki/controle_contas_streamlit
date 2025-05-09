@@ -7,14 +7,20 @@ Aplicativo desenvolvido com **Streamlit Cloud**, pensado para ser executado dire
 ## ✨ Funcionalidades
 
 * 📅 Registro mensal de contas com:
-
   * Nome, valor, data, instância, pagador, se é dividida e links (boleto e comprovante)
-* 📊 Relatório em PDF com:
-
+* 📊 Relatório em PDF mensal com:
   * Gráfico de pizza por categoria
   * Comparativo com mês anterior e mesmo mês do ano anterior
-  * Saldo entre as partes
-* 🧾 Formulários colapsáveis e interface moderna
+  * Saldo entre as partes (incluindo ajuste escolar)
+  * Lista detalhada com links clicáveis
+* 📈 Comparativo de conta por período com gráfico de linha e PDF
+* 🧾 Relatório do período com:
+  * Gráfico de pizza consolidado
+  * Gráficos de linha para contas recorrentes (até 3 por página)
+  * Listagem agrupada por mês com valor, pagador e links clicáveis
+* 📂 Interface organizada com formulários colapsáveis e cabeçalho fixo
+* 🔄 Campos dinâmicos obtidos do banco de dados (nome da conta, quem pagou)
+* 🌐 Datas e nomes de mês formatados para pt-BR nos relatórios
 * 🔐 Integração segura com Supabase via secrets ou variáveis de ambiente
 
 ---
@@ -45,7 +51,6 @@ SUPABASE_KEY = "sua-chave"
 ### Tela Inicial
 
 * Possui um fundo visual personalizado e dois botões:
-
   * **Mês Vigente**: exibe as contas do mês atual.
   * **Histórico**: permite navegar por qualquer mês e ano para consultar contas anteriores.
 
@@ -53,35 +58,41 @@ SUPABASE_KEY = "sua-chave"
 
 * Exibe um cabeçalho com o nome do mês, ano e total pago.
 * Há botões para:
-
   * **Nova Conta**: abre um formulário para registrar uma nova despesa.
   * **Gerar Relatório 📄**: cria um relatório PDF detalhado daquele mês.
 
 ### Cadastro ou Edição de Contas
 
 * Os dados preenchidos incluem:
-
-  * Nome da conta (com opção "Outros")
+  * Nome da conta (baseado no banco)
   * Valor
   * Data de pagamento
   * Instância (ex: cartão, conta específica)
-  * Quem pagou (Roman, Tati, Outro)
+  * Quem pagou (valores dinâmicos baseados no banco)
   * Checkbox para "Conta dividida?"
   * Link do boleto e comprovante (se houver)
 
 * As contas já registradas aparecem em caixas colapsadas (expander), onde é possível:
-
   * Editar e salvar alterações
   * Excluir conta existente
 
-### Relatório em PDF
+### Relatório em PDF do mês
 
 * Gerado automaticamente com:
-
   * Gráfico de pizza por categoria
   * Comparativos com mês anterior e mesmo mês do ano anterior
   * Resumo de quem pagou, saldo entre as partes e ajuste escolar
   * Lista detalhada com links clicáveis para boletos e comprovantes
+
+### Relatórios por período
+
+* Dois tipos:
+  * **Comparativo de conta específica por período:** gráfico de linha + PDF com valor total
+  * **Resumo de todas as contas por período:**
+    * Pizza consolidada
+    * Gráficos de linha (contas recorrentes)
+    * Listagem mês a mês
+    * PDF com download imediato
 
 ---
 
@@ -96,8 +107,7 @@ controle-contas/
 ├── requirements.txt         # Lista de bibliotecas necessárias
 ├── mockupstreamlit.html     # Protótipo HTML da interface para referência visual
 └── assets/
-    ├── bg_1.png             # Imagem de fundo principal usada na tela inicial
-    └── bg_2.png             # Imagem alternativa de fundo (opcional)
+    └── bg_1.png             # Imagem de fundo principal usada na tela inicial
 ```
 
 ---
@@ -116,5 +126,6 @@ python-dateutil
 ```
 
 Essas bibliotecas são carregadas automaticamente pelo ambiente do Streamlit Cloud com base neste `requirements.txt`.
+
 
 
