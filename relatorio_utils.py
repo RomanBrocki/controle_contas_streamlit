@@ -379,9 +379,9 @@ def gerar_relatorio_pdf(df_atual, nome_mes, ano):
         pdf.cell(0, 8, "Balanço equilibrado entre Roman e Tati", ln=True)
 
     if saldo_ajustado > 0:
-        pdf.cell(0, 8, f"Tati deve R$ {abs(saldo_ajustado):,.2f} para Roman (ajustado com R$ {detalhes['ajuste']:,.2f} em favor de Roman)".replace('.', ','), ln=True)
+        pdf.cell(0, 8, f"Tati deve R$ {abs(saldo_ajustado):,.2f} para Roman (ajustado com R$ {detalhes['ajuste']:,.2f} referentes a atividades extracurriculares)".replace('.', ','), ln=True)
     elif saldo_ajustado < 0:
-        pdf.cell(0, 8, f"Roman deve R$ {abs(saldo_ajustado):,.2f} para Tati (ajustado com R$ {detalhes['ajuste']:,.2f} em favor de Roman)".replace('.', ','), ln=True)
+        pdf.cell(0, 8, f"Roman deve R$ {abs(saldo_ajustado):,.2f} para Tati (ajustado com R$ {detalhes['ajuste']:,.2f} referentes a atividades extracurriculares)".replace('.', ','), ln=True)
     else:
         pdf.cell(0, 8, f"Balanço ajustado zerado após ajuste de R$ {detalhes['ajuste']:,.2f}".replace('.', ','), ln=True)
 
