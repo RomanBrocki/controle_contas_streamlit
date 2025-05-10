@@ -34,6 +34,68 @@ class PDF(FPDF):
         self.set_font("Arial", size=10)
 
 
+# ------------------------
+# Função para criação de dict de saldos de pagadores
+# ------------------------
+def calcular_saldo_entre_pagadores(df, ajuste_escolar=929.0):
+    """
+    Calcula o saldo financeiro entre Roman e Tati com base nas contas divididas.
+
+    A função identifica quais contas foram marcadas como "divididas" e determina
+    o valor pago por cada pagador. Considerando que cada um deveria pagar metade
+    do total dessas contas, calcula-se o saldo entre eles. O ajuste fixo é sempre
+    somado ao saldo final em favor de Roman.
+
+    Parâmetros:
+        df (pd.DataFrame): DataFrame contendo os dados das contas do mês.
+        ajuste_escolar (float): Valor fixo a ser ajustado em favor de Roman.
+
+    Retorno:
+        tuple:
+            - saldo (float): Valor que Roman deve a Tati (negativo) ou Tati deve a Roman (positivo).
+            - saldo_ajustado (float): Saldo final com ajuste aplicado.
+            - dict: Detalhamento com:
+                - 'D_R': total pago por Roman
+                - 'D_T': total pago por Tati
+                - 'total': soma das contas divididas
+                - 'metade': quanto cada um deveria pagar
+                - 'ajuste': valor ajustado a favor de Roman
+    """
+    # -----------------------------
+    # 🔍 Filtrar apenas contas divididas
+    # -----------------------------
+    df_divididas = df[df["dividida"] == True]
+
+    # -----------------------------
+    # 💰 Totais pagos por cada um
+    # -----------------------------
+    total_dividido_roman = df_divididas[df_divididas["quem_pagou"] == "Roman"]["valor"].sum()
+    total_dividido_tati = df_divididas[df_divididas["quem_pagou"] == "Tati"]["valor"].sum()
+
+    # -----------------------------
+    # 🧮 Cálculo do saldo
+    # -----------------------------
+    total_dividido = total_dividido_roman + total_dividido_tati
+    metade = total_dividido / 2
+    saldo = total_dividido_roman - metade
+
+    # -----------------------------
+    # 🎓 Aplicação do ajuste escolar a favor de Roman
+    # -----------------------------
+    saldo_ajustado = saldo + ajuste_escolar
+
+    # -----------------------------
+    # 📦 Retorno estruturado
+    # -----------------------------
+    return saldo, saldo_ajustado, {
+        "D_R": total_dividido_roman,
+        "D_T": total_dividido_tati,
+        "total": total_dividido,
+        "metade": metade,
+        "ajuste": ajuste_escolar
+    }
+
+
 # =====================================================
 # 📊 Gráfico comparativo duplo: mês anterior e ano anterior
 # =====================================================
@@ -240,7 +302,7 @@ def gerar_relatorio_pdf(df_atual, nome_mes, ano):
     df_ano_passado = carregar_mes_referente(
         df_atual.iloc[0]['mes'], df_atual.iloc[0]['ano'], delta_anos=-1
     )
-    
+
     # -----------------------------
     # 🧹 Pré-processamento dos dados
     # -----------------------------
@@ -259,26 +321,16 @@ def gerar_relatorio_pdf(df_atual, nome_mes, ano):
     total_gastos = categorias.sum()
 
     # -----------------------------
-    # 🔄 Cálculo dos débitos em contas divididas
+    # 🔄 Cálculo do saldo entre pagadores com ajuste
     # -----------------------------
+    saldo, saldo_ajustado, detalhes = calcular_saldo_entre_pagadores(df)
     df_divididas = df[df['dividida'] == True]
-    debitos = {'Roman': 0.0, 'Tati': 0.0}
-    for _, row in df_divididas.iterrows():
-        metade = row['valor'] / 2
-        if row['quem_pagou'] == 'Roman':
-            debitos['Tati'] += metade
-        elif row['quem_pagou'] == 'Tati':
-            debitos['Roman'] += metade
-
-    saldo = debitos['Tati'] - debitos['Roman']
-
 
     # -----------------------------
     # 📊 Geração do gráfico de pizza por categoria
+    # -----------------------------
     grafico_path = "grafico_pizza.png"
     gerar_grafico_pizza_periodo(df, grafico_path)
-
-
 
     # -----------------------------
     # 📊 Geração do gráfico comparativo duplo
@@ -303,55 +355,35 @@ def gerar_relatorio_pdf(df_atual, nome_mes, ano):
     if pdf.get_y() < 190:
         pdf.set_y(200)
 
-     # -----------------------------
-    # 📋 Resumo geral no PDF
+    # -----------------------------
+    # 📋 Resumo geral no PDF (compacto)
     # -----------------------------
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, "Resumo Geral:", ln=True)
 
     pdf.set_font("Arial", size=11)
     pdf.cell(0, 8, f"Total gasto: R$ {total_gastos:,.2f}".replace('.', ','), ln=True)
-    pdf.cell(
-        0, 8,
-        f"Roman: R$ {total_roman:,.2f} | Tati: R$ {total_tati:,.2f} | Outros: R$ {total_outros:,.2f}".replace('.', ','),
-        ln=True
-    )
-    pdf.cell(0, 8, f"Contas divididas: {len(df_divididas)}", ln=True)
+    pdf.cell(0, 8, f"Roman: R$ {total_roman:,.2f} | Tati: R$ {total_tati:,.2f} | Outros: R$ {total_outros:,.2f}".replace('.', ','), ln=True)
 
-    ajuste_escola = 929.00
-    saldo_ajustado = saldo + ajuste_escola
+    pdf.ln(3)
+    pdf.cell(0, 8, f"Total dividido: R$ {detalhes['total']:,.2f}".replace('.', ','), ln=True)
+    pdf.cell(0, 8, f"Cada um deveria pagar: R$ {detalhes['metade']:,.2f}".replace('.', ','), ln=True)
+    pdf.cell(0, 8, f"Pago por Roman: R$ {detalhes['D_R']:,.2f} | Pago por Tati: R$ {detalhes['D_T']:,.2f}".replace('.', ','), ln=True)
+    
 
-    # -----------------------------
-    # 💳 Linha 1: Saldo original
-    # -----------------------------
-    if saldo < 0:
-        pdf.cell(0, 8, f"Roman deve R$ {abs(saldo):,.2f} para Tati".replace('.', ','), ln=True)
-    elif saldo > 0:
+    if saldo > 0:
         pdf.cell(0, 8, f"Tati deve R$ {abs(saldo):,.2f} para Roman".replace('.', ','), ln=True)
+    elif saldo < 0:
+        pdf.cell(0, 8, f"Roman deve R$ {abs(saldo):,.2f} para Tati".replace('.', ','), ln=True)
     else:
         pdf.cell(0, 8, "Balanço equilibrado entre Roman e Tati", ln=True)
 
-    # -----------------------------
-    # 🏫 Linha 2: Saldo ajustado com atividades da escola
-    # -----------------------------
-    if saldo_ajustado < 0:
-        pdf.cell(
-            0, 8,
-            f"Roman deve R$ {abs(saldo_ajustado):,.2f} para Tati (após abater R$ {ajuste_escola:,.2f} das atividades extras da escola)".replace('.', ','),
-            ln=True
-        )
-    elif saldo_ajustado > 0:
-        pdf.cell(
-            0, 8,
-            f"Tati deve R$ {abs(saldo_ajustado):,.2f} para Roman (após abater R$ {ajuste_escola:,.2f} das atividades extras da escola)".replace('.', ','),
-            ln=True
-        )
+    if saldo_ajustado > 0:
+        pdf.cell(0, 8, f"Tati deve R$ {abs(saldo_ajustado):,.2f} para Roman (ajustado com R$ {detalhes['ajuste']:,.2f} em favor de Roman)".replace('.', ','), ln=True)
+    elif saldo_ajustado < 0:
+        pdf.cell(0, 8, f"Roman deve R$ {abs(saldo_ajustado):,.2f} para Tati (ajustado com R$ {detalhes['ajuste']:,.2f} em favor de Roman)".replace('.', ','), ln=True)
     else:
-        pdf.cell(
-            0, 8,
-            f"Balanço ajustado: Tati deve R$ {ajuste_escola:,.2f} para Roman (atividades extras da escola)".replace('.', ','),
-            ln=True
-        )
+        pdf.cell(0, 8, f"Balanço ajustado zerado após ajuste de R$ {detalhes['ajuste']:,.2f}".replace('.', ','), ln=True)
 
     # -----------------------------
     # 📊 Página com gráfico comparativo duplo
@@ -408,6 +440,7 @@ def gerar_relatorio_pdf(df_atual, nome_mes, ano):
             os.remove(path)
 
     return buffer
+
 
 # =====================================================
 # 📥 Carregar dados de uma conta em um intervalo de meses
@@ -682,7 +715,9 @@ def gerar_relatorio_periodo_pdf(df, mes_inicio, ano_inicio, mes_fim, ano_fim):
         pdf.add_page()
         pdf.set_font("Arial", "B", 14)
         nome_mes = pd.Timestamp(year=ano, month=mes, day=1).strftime("%B").capitalize()
-        pdf.cell(0, 10, f"{nome_mes}/{ano}", ln=True)
+        total_mes = sum(r["valor"] for r in agrupado[(ano, mes)])
+        pdf.cell(0, 10, f"{nome_mes}/{ano} - Total: R$ {total_mes:,.2f}".replace('.', ','), ln=True)
+
 
         pdf.set_font("Arial", size=9)
         for row in agrupado[(ano, mes)]:
