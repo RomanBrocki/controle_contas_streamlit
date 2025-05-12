@@ -136,6 +136,18 @@ def exibir_formulario_conta(dados, idx_prefix="conta"):
             key=f"nome_da_conta_{idx_prefix}"
         )
 
+        # 🔧 Corrige foco automático que ativa teclado no mobile
+        st.components.v1.html("""
+        <script>
+        const selects = window.parent.document.querySelectorAll('select');
+        selects.forEach(sel => {
+          sel.addEventListener('touchstart', function(e) {
+            e.target.blur();
+          }, {passive: true});
+        });
+        </script>
+        """, height=0)
+
         if selecao == "Outros":
             custom_nome = st.text_input("Digite o nome da nova conta:", key=f"nome_custom_{idx_prefix}")
             dados['nome_da_conta'] = custom_nome
