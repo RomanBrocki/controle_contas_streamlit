@@ -136,21 +136,6 @@ def exibir_formulario_conta(dados, idx_prefix="conta"):
             key=f"nome_da_conta_{idx_prefix}"
         )
 
-        st.components.v1.html("""
-        <script>
-        const selects = window.parent.document.querySelectorAll('select');
-        selects.forEach(sel => {
-            sel.setAttribute('readonly', true); // força o navegador a não mostrar teclado
-            sel.addEventListener('focus', function(e) {
-                e.target.blur(); // remove o foco imediatamente
-            });
-        });
-        </script>
-        """, height=0)
-
-
-
-
         if selecao == "Outros":
             custom_nome = st.text_input("Digite o nome da nova conta:", key=f"nome_custom_{idx_prefix}")
             dados['nome_da_conta'] = custom_nome
