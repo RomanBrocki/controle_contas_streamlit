@@ -121,10 +121,10 @@ def exibir_formulario_conta(dados, idx_prefix="conta"):
     # --------------------------
     col1, col2, col3 = st.columns(3)
     with col1:
-        opcoes_conta = ["Selecione..."] + get_nomes_conta_unicos() + ["Outros"]
+        opcoes_conta = ["Selecione...##"] + get_nomes_conta_unicos() + ["Outros"]
 
         valor_inicial = (
-            "Selecione..."
+            "Selecione...##"
             if idx_prefix == "nova"
             else dados.get('nome_da_conta') if dados.get('nome_da_conta') in opcoes_conta else "Outros"
         )
