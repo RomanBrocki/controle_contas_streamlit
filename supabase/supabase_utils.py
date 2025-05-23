@@ -2,31 +2,15 @@
 # 📦 IMPORTAÇÕES (em ordem alfabética)
 # ====================================
 
-import json
+
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
+import json
 
 import pandas as pd
 import requests
-import streamlit as st
 
-
-# ========================
-# 🔗 CONFIGURAÇÃO SUPABASE
-# ========================
-
-# Esses valores são lidos de .streamlit/secrets.toml no ambiente local
-# ou de variáveis de ambiente no Streamlit Cloud
-SUPABASE_URL = st.secrets["SUPABASE_URL"]
-SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-TABELA = "controle_contas"
-
-HEADERS = {
-    "apikey": SUPABASE_KEY,
-    "Authorization": f"Bearer {SUPABASE_KEY}",
-    "Content-Type": "application/json"
-}
-
+from .supabase_config import SUPABASE_URL, SUPABASE_KEY, TABELA, HEADERS
 
 # ==============================
 # 📥 CARREGAMENTO DE DADOS
@@ -224,7 +208,6 @@ def carregar_mes_referente(mes, ano, delta_meses=0, delta_anos=0):
 # 📅 LISTAR ANOS E MESES DISPONÍVEIS
 # ==============================
 
-from datetime import datetime
 
 def get_anos_meses_disponiveis():
     """
@@ -258,14 +241,3 @@ def get_anos_meses_disponiveis():
     except Exception as e:
         print(f"Erro ao montar intervalo de anos baseados em today: {e}")
         return [], []
-
-
-
-
-
-
-
-
-
-
-

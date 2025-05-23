@@ -50,9 +50,10 @@ SUPABASE_KEY = "sua-chave"
 
 ### Tela Inicial
 
-* Possui um fundo visual personalizado e dois botões:
+* Possui um fundo visual personalizado e três botões:
   * **Mês Vigente**: exibe as contas do mês atual.
   * **Histórico**: permite navegar por qualquer mês e ano para consultar contas anteriores.
+  * **Relatórios**: acesso à análise por período com gráficos e PDFs.
 
 ### Modo "Mês Vigente" ou "Histórico"
 
@@ -98,16 +99,33 @@ SUPABASE_KEY = "sua-chave"
 
 ## 📁 Estrutura do Projeto
 
-```
+```plaintext
 controle-contas/
-├── app.py                    # App principal com lógica de interface e navegação
-├── estilo.py                # Estilo visual customizado para o Streamlit
-├── relatorio_utils.py       # Geração de relatórios financeiros com gráficos e PDF
-├── supabase_utils.py        # Módulo de integração com Supabase (CRUD via REST API)
-├── requirements.txt         # Lista de bibliotecas necessárias
-├── mockupstreamlit.html     # Protótipo HTML da interface para referência visual
-└── assets/
-    └── bg_1.png             # Imagem de fundo principal usada na tela inicial
+├── app.py                        # Aplicativo principal (interface e navegação)
+├── estilo.py                     # Estilo visual customizado (fundo, cabeçalho flutuante)
+│
+├── interface/                    # Componentes da interface
+│   ├── app_utils.py              # Formulários, cabeçalho e visualização de contas
+│   ├── app_vars.py               # Inicialização do estado de sessão
+│   ├── navegacao.py              # Funções de troca de tela
+│   └── __init__.py
+│
+├── relatorio/                    # Geração de relatórios, gráficos e PDFs
+│   ├── graficos.py
+│   ├── pdf.py
+│   ├── utils.py
+│   └── __init__.py
+│
+├── supabase/                     # Comunicação com o Supabase (REST API)
+│   ├── supabase_config.py
+│   ├── supabase_utils.py
+│   └── __init__.py
+│
+├── assets/
+│   └── bg_1.png                  # Imagem de fundo da tela inicial
+│
+├── requirements.txt              # Dependências do projeto
+└── mockupstreamlit.html          # Protótipo HTML da interface (opcional)
 ```
 
 ---
@@ -118,14 +136,15 @@ controle-contas/
 streamlit
 pandas
 openpyxl
-fpdf2
+fpdf
 matplotlib
 numpy
 requests
 python-dateutil
 ```
 
-Essas bibliotecas são carregadas automaticamente pelo ambiente do Streamlit Cloud com base neste `requirements.txt`.
+Essas bibliotecas são carregadas automaticamente na Streamlit Cloud com base no `requirements.txt`.
+
 
 
 

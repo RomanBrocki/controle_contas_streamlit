@@ -22,7 +22,4 @@ Thumbs.db
 .streamlit/secrets.toml
 
 # Arquivos duplicados que não devem ir para o repositório
-app - Copia.py
-app - Copia (2).py
-relatorio_utils - Copia.py
-supabase_utils - Copia.py
+legado
