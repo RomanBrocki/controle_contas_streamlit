@@ -36,6 +36,22 @@ def carregar_tabela(mes: int, ano: int):
         # Retorna DataFrame vazio em caso de erro
         return pd.DataFrame()
 
+def carregar_mes_referente(mes, ano, delta_meses=0, delta_anos=0):
+    """
+    Carrega os dados do mês ajustado pelo deslocamento desejado.
+
+    Parâmetros:
+    - mes (int): Mês base
+    - ano (int): Ano base
+    - delta_meses (int): Deslocamento de meses (+/-)
+    - delta_anos (int): Deslocamento de anos (+/-)
+
+    Retorno:
+    - pd.DataFrame: Dados do mês ajustado
+    """
+    data_base = datetime(ano, mes, 1)
+    data_destino = data_base + relativedelta(months=delta_meses, years=delta_anos)
+    return carregar_tabela(data_destino.month, data_destino.year)
 
 # ==============================
 # ➕ INSERÇÃO DE NOVA CONTA

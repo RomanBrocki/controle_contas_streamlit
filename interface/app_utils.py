@@ -13,6 +13,7 @@ from relatorio import (
 
 from supabase import (
     carregar_tabela,
+    carregar_mes_referente,
     excluir_conta,
     get_nomes_conta_unicos,
     salvar_conta,
@@ -40,7 +41,41 @@ def exibir_cabecalho_mes(nome_mes, ano, total):
     </div>
     """, unsafe_allow_html=True)
 
+# ================================================
+# 🧾 Flutuante controle de contas a pagar
+# ================================================
 
+def mostrar_lembrete_balanco(df_atual, mes, ano):
+    """
+    Exibe um lembrete flutuante com contas que estavam no mês anterior
+    e ainda não foram pagas neste mês, incluindo a data em que foram pagas.
+    """
+    df_anterior = carregar_mes_referente(mes, ano, delta_meses=-1)
+
+    if df_anterior.empty or df_atual.empty or "nome_da_conta" not in df_atual.columns:
+        return
+
+    contas_atuais = set(df_atual["nome_da_conta"].str.strip().str.lower())
+    contas_anteriores = df_anterior["nome_da_conta"].str.strip().str.lower()
+
+    contas_nao_pagas = contas_anteriores[~contas_anteriores.isin(contas_atuais)].unique()
+
+    if not len(contas_nao_pagas):
+        return
+
+    html_linhas = ""
+    for conta in contas_nao_pagas:
+        linha = df_anterior[df_anterior["nome_da_conta"].str.strip().str.lower() == conta]
+        nome_original = linha.iloc[0]["nome_da_conta"]
+        data_pagamento = pd.to_datetime(linha.iloc[0]["data_de_pagamento"]).strftime("%d/%m")
+        html_linhas += f"<li>{nome_original} → paga em {data_pagamento}</li>"
+
+    st.markdown(f"""
+    <div class="lembrete-balanco">
+        <strong>📌 Contas pendentes este mês (em relação ao anterior):</strong>
+        <ul style="margin: 0; padding-left: 18px;">{html_linhas}</ul>
+    </div>
+    """, unsafe_allow_html=True)
 # ====================================
 # 📝 FORMULÁRIO DE CONTA
 # ====================================
@@ -199,6 +234,7 @@ def exibir_contas_mes(df, nome_mes, ano, mes):
     # --------------------------
     total = df['valor'].sum() if not df.empty else 0
     exibir_cabecalho_mes(nome_mes, ano, total)
+    mostrar_lembrete_balanco(df, mes, ano)
 
     # --------------------------
     # 🧩 Botões: Nova Conta e Relatório

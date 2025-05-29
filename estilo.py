@@ -89,5 +89,28 @@ def aplicar_estilo_mockup():
         background-color: #6b7b8c;
         transform: scale(1.05);
     }
+    .lembrete-balanco {
+        position: sticky;
+        top: 65px;
+        background-color: #2f2f2f;
+        padding: 14px 20px;
+        margin: 0 auto 25px auto;
+        max-width: 700px;
+        border-left: 6px solid #4a5c6a;
+        border-radius: 8px;
+        color: #f0f0f0;
+        font-size: 15px;
+        box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.35);
+        z-index: 999;
+    }
+    .lembrete-balanco ul {
+        margin-top: 6px;
+        padding-left: 22px;
+    }
+    .lembrete-balanco li {
+        margin-bottom: 4px;
+    }
+
     </style>
     """, unsafe_allow_html=True)
+    

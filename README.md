@@ -1,136 +1,73 @@
+### README.md (raiz do projeto)
+
 # 💸 Controle de Contas Pessoais
 
-Aplicativo desenvolvido com **Streamlit Cloud**, pensado para ser executado diretamente no navegador, sem necessidade de instalação local. Ele permite controlar contas domésticas pagas mensalmente, incluindo geração de relatórios financeiros completos e integração com Supabase.
-
+Aplicativo desenvolvido com **Streamlit Cloud**, pensado para controle doméstico de despesas mensais com visual moderno, geração de relatórios e integração ao Supabase.
 ---
-
+# Repositório github:
+https://github.com/RomanBrocki/controle_contas_streamlit
+---
 ## ✨ Funcionalidades
 
-* 📅 Registro mensal de contas com:
-  * Nome, valor, data, instância, pagador, se é dividida e links (boleto e comprovante)
-* 📊 Relatório em PDF mensal com:
+* 📅 Registro de contas mensais com nome, valor, data, pagador, se é dividida, instância e links
+* 📊 Relatório mensal em PDF com:
+
   * Gráfico de pizza por categoria
   * Comparativo com mês anterior e mesmo mês do ano anterior
-  * Saldo entre as partes (incluindo ajuste escolar)
-  * Lista detalhada com links clicáveis
-* 📈 Comparativo de conta por período com gráfico de linha e PDF
-* 🧾 Relatório do período com:
-  * Gráfico de pizza consolidado
-  * Gráficos de linha para contas recorrentes (até 3 por página)
-  * Listagem agrupada por mês com valor, pagador e links clicáveis
-* 📂 Interface organizada com formulários colapsáveis e cabeçalho fixo
-* 🔄 Campos dinâmicos obtidos do banco de dados (nome da conta, quem pagou)
-* 🌐 Datas e nomes de mês formatados para pt-BR nos relatórios
-* 🔐 Integração segura com Supabase via secrets ou variáveis de ambiente
+  * Saldo entre pagadores (com ajuste escolar)
+  * Lista clicável com links de comprovantes e boletos
+* 📈 Comparativo por conta com gráfico de linha e PDF
+* 🧾 Resumo de múltiplos meses com pizza consolidada, gráficos de linha e listagem agrupada
+* 📌 Lembrete com contas não pagas comparando com o mês anterior
+* 🌐 Interface organizada com cabeçalho fixo e formulários colapsáveis
 
 ---
 
-## 🚀 Como Usar (via Streamlit Cloud)
+## 🚀 Como Usar na Streamlit Cloud
 
-1. **Suba os arquivos para um repositório no GitHub.**
-
-2. **Acesse:** [streamlit.io/cloud](https://streamlit.io/cloud) e conecte com seu GitHub
-
-3. **Escolha o repositório e o arquivo principal:** `app.py`
-
-4. **Configure os secrets em Settings > Secrets:**
+1. Suba o projeto no GitHub
+2. Vá para [streamlit.io/cloud](https://streamlit.io/cloud) e conecte sua conta
+3. Aponte o app principal: `app.py`
+4. Configure os segredos no menu `Settings > Secrets`:
 
 ```toml
 SUPABASE_URL = "https://seu-projeto.supabase.co"
 SUPABASE_KEY = "sua-chave"
 ```
 
-> Alternativamente, você pode configurar essas variáveis como variáveis de ambiente no painel da Streamlit Cloud.
-
-5. **Clique em Deploy.** Pronto!
+5. Clique em Deploy
 
 ---
 
-## 🧑‍💻 Como Funciona o Uso no Navegador
+## 📁 Estrutura
 
-### Tela Inicial
-
-* Possui um fundo visual personalizado e três botões:
-  * **Mês Vigente**: exibe as contas do mês atual.
-  * **Histórico**: permite navegar por qualquer mês e ano para consultar contas anteriores.
-  * **Relatórios**: acesso à análise por período com gráficos e PDFs.
-
-### Modo "Mês Vigente" ou "Histórico"
-
-* Exibe um cabeçalho com o nome do mês, ano e total pago.
-* Há botões para:
-  * **Nova Conta**: abre um formulário para registrar uma nova despesa.
-  * **Gerar Relatório 📄**: cria um relatório PDF detalhado daquele mês.
-
-### Cadastro ou Edição de Contas
-
-* Os dados preenchidos incluem:
-  * Nome da conta (baseado no banco)
-  * Valor
-  * Data de pagamento
-  * Instância (ex: cartão, conta específica)
-  * Quem pagou (valores dinâmicos baseados no banco)
-  * Checkbox para "Conta dividida?"
-  * Link do boleto e comprovante (se houver)
-
-* As contas já registradas aparecem em caixas colapsadas (expander), onde é possível:
-  * Editar e salvar alterações
-  * Excluir conta existente
-
-### Relatório em PDF do mês
-
-* Gerado automaticamente com:
-  * Gráfico de pizza por categoria
-  * Comparativos com mês anterior e mesmo mês do ano anterior
-  * Resumo de quem pagou, saldo entre as partes e ajuste escolar
-  * Lista detalhada com links clicáveis para boletos e comprovantes
-
-### Relatórios por período
-
-* Dois tipos:
-  * **Comparativo de conta específica por período:** gráfico de linha + PDF com valor total
-  * **Resumo de todas as contas por período:**
-    * Pizza consolidada
-    * Gráficos de linha (contas recorrentes)
-    * Listagem mês a mês
-    * PDF com download imediato
-
----
-
-## 📁 Estrutura do Projeto
-
-```plaintext
+```bash
 controle-contas/
-├── app.py                        # Aplicativo principal (interface e navegação)
-├── estilo.py                     # Estilo visual customizado (fundo, cabeçalho flutuante)
+├── app.py                 # App principal e roteamento
+├── estilo.py              # Estilos visuais globais
+├── assets/                # Imagem de fundo
 │
-├── interface/                    # Componentes da interface
-│   ├── app_utils.py              # Formulários, cabeçalho e visualização de contas
-│   ├── app_vars.py               # Inicialização do estado de sessão
-│   ├── navegacao.py              # Funções de troca de tela
-│   └── __init__.py
+├── interface/
+│   ├── app_utils.py       # Formulários, cabeçalho, lembretes
+│   ├── app_vars.py        # Inicialização do session_state
+│   ├── navegacao.py       # Troca de tela
+│   └── __init__.py        # Pacote de interface
 │
-├── relatorio/                    # Geração de relatórios, gráficos e PDFs
-│   ├── graficos.py
-│   ├── pdf.py
-│   ├── utils.py
-│   └── __init__.py
+├── relatorio/
+│   ├── graficos.py        # Geração de gráficos
+│   ├── pdf.py             # Relatórios em PDF
+│   ├── utils.py           # Cálculos auxiliares e carregamento por período
+│   └── __init__.py        # Pacote de relatórios
 │
-├── supabase/                     # Comunicação com o Supabase (REST API)
-│   ├── supabase_config.py
-│   ├── supabase_utils.py
-│   └── __init__.py
-│
-├── assets/
-│   └── bg_1.png                  # Imagem de fundo da tela inicial
-│
-├── requirements.txt              # Dependências do projeto
-└── mockupstreamlit.html          # Protótipo HTML da interface (opcional)
+├── supabase/
+│   ├── supabase_utils.py  # CRUD e integração REST
+│   ├── supabase_config.py # Variáveis de acesso
+│   └── __init__.py        # Pacote supabase
 ```
 
 ---
 
-## 📦 Dependências Necessárias
+## 📦 Requisitos
 
 ```txt
 streamlit
@@ -143,7 +80,39 @@ requests
 python-dateutil
 ```
 
-Essas bibliotecas são carregadas automaticamente na Streamlit Cloud com base no `requirements.txt`.
+---
+
+### 📁 interface/README.md
+
+Módulo responsável pela interface visual do usuário:
+
+* `app_utils.py`: cabeçalho, formulários, lembretes e exibição de contas
+* `app_vars.py`: controle de estado da sessão
+* `navegacao.py`: troca de telas
+
+### 📁 relatorio/README.md
+
+Responsável pela geração de relatórios:
+
+* `graficos.py`: gráficos de pizza e linha
+* `pdf.py`: exportação de relatórios mensais e por período
+* `utils.py`: cálculo de saldo, agrupamento e carregamento de dados históricos
+
+### 📁 supabase/README.md
+
+Responsável pela comunicação com o Supabase:
+
+* `supabase_utils.py`: funções REST para carregar, salvar e excluir contas
+* `supabase_config.py`: configuração de acesso via URL e chave
+
+### 📁 assets/README.md
+
+Contém recursos visuais estáticos, como a imagem de fundo da tela inicial.
+
+---
+
+Pronto para ser executado diretamente na nuvem com visual moderno, funcionalidade prática e histórico persistente.
+
 
 
 
