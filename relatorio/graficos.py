@@ -41,17 +41,28 @@ def gerar_grafico_pizza_periodo(df, nome_arquivo):
     ax.set_position([pos.x0 - 0.07, pos.y0, pos.width, pos.height])
 
     for i, p in enumerate(wedges):
-        ang = (p.theta2 - p.theta1)/2. + p.theta1
+        ang = (p.theta2 - p.theta1) / 2. + p.theta1
         x = np.cos(np.deg2rad(ang))
         y = np.sin(np.deg2rad(ang))
         valor = categorias_ordenadas.iloc[i]
+        percentual = valor / total_gastos
+
+        anotacao = {
+            "xy": (x, y),
+            "xytext": (1.2 * x, 1.2 * y),
+            "textcoords": "data",
+            "ha": "center",
+            "va": "center",
+            "fontsize": 8,
+            "color": "black"
+        }
+
+        if percentual <= 0.3:
+            anotacao["arrowprops"] = dict(arrowstyle="-")
+
         ax.annotate(
             f'{categorias_ordenadas.index[i]}: R$ {valor:,.2f}'.replace('.', ','),
-            xy=(x, y), xytext=(1.2*x, 1.2*y),
-            ha='center', va='center',
-            arrowprops=dict(arrowstyle='-'),
-            fontsize=8,
-            color='black'
+            **anotacao
         )
 
     plt.title("Gastos por Categoria no Período")
