@@ -120,13 +120,16 @@ def exibir_formulario_conta(dados, idx_prefix="conta"):
     # 💵 Seção 2: Valor e Data
     # --------------------------
     with col2:
+        valor_inicial = None if idx_prefix == "nova" else float(dados.get('valor', 0.0))
         dados['valor'] = st.number_input(
             "Valor Pago",
             min_value=0.0,
             format="%.2f",
-            value=float(dados.get('valor', 0.0)),
+            value=valor_inicial,
+            placeholder="0.00",
             key=f"valor_{idx_prefix}"
         )
+
 
     with col3:
         dados['data_de_pagamento'] = st.date_input(
@@ -258,8 +261,12 @@ def exibir_contas_mes(df, nome_mes, ano, mes):
             st.stop()
 
         pdf_bytes = gerar_relatorio_pdf(df.copy(), nome_mes_detectado, ano_detectado)
-        nome_arquivo = f"relatorio_{nome_mes_detectado}_{ano_detectado}.pdf"
-        st.download_button("Download Relatório PDF", data=pdf_bytes, file_name=nome_arquivo, mime="application/pdf")
+        if pdf_bytes is not None:
+            nome_arquivo = f"relatorio_{nome_mes_detectado}_{ano_detectado}.pdf"
+            st.download_button("Download Relatório PDF", data=pdf_bytes, file_name=nome_arquivo, mime="application/pdf")
+        else:
+            st.error("Erro ao gerar o PDF. Verifique se os dados estão preenchidos corretamente.")
+
 
     # --------------------------
     # ➕ Formulário de Nova Conta
@@ -269,7 +276,7 @@ def exibir_contas_mes(df, nome_mes, ano, mes):
         st.subheader("Nova Conta")
         nova_conta = {
             'nome_da_conta': "Selecione...",
-            'valor': 0.0,
+            'valor': None,
             'data_de_pagamento': datetime.today(),
             'instancia': "",
             'quem_pagou': "Roman",
