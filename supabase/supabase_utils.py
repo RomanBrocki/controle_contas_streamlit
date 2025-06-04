@@ -36,21 +36,31 @@ def carregar_tabela(mes: int, ano: int):
         # Retorna DataFrame vazio em caso de erro
         return pd.DataFrame()
 
+    
+# 📆 CARREGAR MÊS REFERENTE
+
 def carregar_mes_referente(mes, ano, delta_meses=0, delta_anos=0):
     """
-    Carrega os dados do mês ajustado pelo deslocamento desejado.
+    Carrega os dados de um mês e ano ajustado por um deslocamento (delta).
+
+    Usado para buscar, por exemplo, o mês anterior ou o mesmo mês do ano anterior.
 
     Parâmetros:
-    - mes (int): Mês base
-    - ano (int): Ano base
-    - delta_meses (int): Deslocamento de meses (+/-)
-    - delta_anos (int): Deslocamento de anos (+/-)
+    - mes (int): Mês base (1 a 12)
+    - ano (int): Ano base (ex: 2025)
+    - delta_meses (int, opcional): Quantidade de meses para ajustar (+/-). Ex: -1 para mês anterior.
+    - delta_anos (int, opcional): Quantidade de anos para ajustar (+/-). Ex: -1 para ano anterior.
 
     Retorno:
-    - pd.DataFrame: Dados do mês ajustado
+    - pd.DataFrame: DataFrame com os dados do mês/ano ajustado.
     """
+    # Cria um objeto de data base (dia 1 do mês)
     data_base = datetime(ano, mes, 1)
+
+    # Aplica os ajustes (ex: -1 mês, -1 ano)
     data_destino = data_base + relativedelta(months=delta_meses, years=delta_anos)
+
+    # Reutiliza a função principal de carregamento
     return carregar_tabela(data_destino.month, data_destino.year)
 
 # ==============================
@@ -190,35 +200,6 @@ def get_nomes_conta_unicos():
 
     return []
 
-
-
-# ==============================
-# 📆 CARREGAR MÊS REFERENTE
-# ==============================
-
-def carregar_mes_referente(mes, ano, delta_meses=0, delta_anos=0):
-    """
-    Carrega os dados de um mês e ano ajustado por um deslocamento (delta).
-
-    Usado para buscar, por exemplo, o mês anterior ou o mesmo mês do ano anterior.
-
-    Parâmetros:
-    - mes (int): Mês base (1 a 12)
-    - ano (int): Ano base (ex: 2025)
-    - delta_meses (int, opcional): Quantidade de meses para ajustar (+/-). Ex: -1 para mês anterior.
-    - delta_anos (int, opcional): Quantidade de anos para ajustar (+/-). Ex: -1 para ano anterior.
-
-    Retorno:
-    - pd.DataFrame: DataFrame com os dados do mês/ano ajustado.
-    """
-    # Cria um objeto de data base (dia 1 do mês)
-    data_base = datetime(ano, mes, 1)
-
-    # Aplica os ajustes (ex: -1 mês, -1 ano)
-    data_destino = data_base + relativedelta(months=delta_meses, years=delta_anos)
-
-    # Reutiliza a função principal de carregamento
-    return carregar_tabela(data_destino.month, data_destino.year)
 
 # ==============================
 # 📅 LISTAR ANOS E MESES DISPONÍVEIS

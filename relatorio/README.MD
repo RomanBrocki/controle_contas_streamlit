@@ -29,3 +29,6 @@ Funções auxiliares de cálculo e agregação:
 Facilita a importação direta dos recursos do módulo:
 ```python
 from relatorio import gerar_relatorio_pdf, gerar_pdf_comparativo_conta
+```
+Essas importações concentram as funções principais do pacote em um único
+lugar, evitando a necessidade de referenciar cada submódulo separadamente.

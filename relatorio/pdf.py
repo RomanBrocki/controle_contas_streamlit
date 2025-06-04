@@ -156,7 +156,7 @@ def gerar_relatorio_pdf(df_atual, nome_mes, ano):
     return buffer
 
 # ==================================================================
-# 📄 Geração do Relatório PDF comparativo entre mêses selecionados
+# 📄 Geração do Relatório PDF comparativo entre meses selecionados
 # ==================================================================
 
 def gerar_relatorio_periodo_pdf(df, mes_inicio, ano_inicio, mes_fim, ano_fim):
