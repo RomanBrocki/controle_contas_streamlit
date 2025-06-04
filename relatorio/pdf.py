@@ -146,8 +146,12 @@ def gerar_relatorio_pdf(df_atual, nome_mes, ano):
         pdf.ln(3)
 
     buffer = BytesIO()
-    pdf.output(buffer)
+    output = pdf.output(dest="S")
+    pdf_bytes = output.encode("latin1") if isinstance(output, str) else output
+    buffer.write(pdf_bytes)
     buffer.seek(0)
+
+
 
     for path in [grafico_path, comparativo_path]:
         if os.path.exists(path):
@@ -257,8 +261,11 @@ def gerar_relatorio_periodo_pdf(df, mes_inicio, ano_inicio, mes_fim, ano_fim):
         pdf.ln(3)
 
     buffer = BytesIO()
-    pdf.output(buffer)
+    output = pdf.output(dest="S")
+    pdf_bytes = output.encode("latin1") if isinstance(output, str) else output
+    buffer.write(pdf_bytes)
     buffer.seek(0)
+
 
     # Limpa os arquivos temporários criados
     for path in arquivos_temp:
@@ -323,8 +330,11 @@ def gerar_pdf_comparativo_conta(df, nome_conta, mes_inicio, ano_inicio, mes_fim,
     # 💾 Exportar para buffer de memória
     # -----------------------------
     buffer = BytesIO()
-    pdf.output(buffer)
+    output = pdf.output(dest="S")
+    pdf_bytes = output.encode("latin1") if isinstance(output, str) else output
+    buffer.write(pdf_bytes)
     buffer.seek(0)
+
 
     # Limpar imagem temporária
     if os.path.exists(caminho_img):
