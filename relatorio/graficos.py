@@ -26,15 +26,18 @@ def gerar_grafico_pizza_periodo(df, nome_arquivo):
 
     explode = [0.01 + (v / categorias_ordenadas.max()) * 0.1 for v in categorias_ordenadas]
 
+    def autopct_cond(pct):
+        return f"{pct:.1f}%" if pct >= 6 else ""  # só mostra dentro se ≥ 6%
+
     fig, ax = plt.subplots(figsize=(7, 6))
     wedges, *_ = ax.pie(
         categorias_ordenadas,
         startangle=90,
         explode=explode,
         labels=None,
-        autopct=lambda pct: f"{pct:.1f}%",
+        autopct=autopct_cond,
         textprops=dict(color="white", fontsize=8),
-        pctdistance=0.6,  # percentual mais próximo do centro
+        pctdistance=0.6,
         radius=0.85
     )
 
@@ -56,17 +59,20 @@ def gerar_grafico_pizza_periodo(df, nome_arquivo):
             "color": "black"
         }
 
-        # Só coloca traço se fatia for pequena
         if percentual <= 0.08:
             anotacao["arrowprops"] = dict(arrowstyle="-", lw=0.8)
 
         ax.annotate(str(categorias_ordenadas.index[i]), **anotacao)
 
-    # Legenda com valores
-    legendas = [
-        f"{nome}: R$ {valor:,.2f}".replace('.', ',')
-        for nome, valor in zip(categorias_ordenadas.index, categorias_ordenadas)
-    ]
+    # Legenda: inclui percentual se não foi mostrado dentro
+    legendas = []
+    for nome, valor in zip(categorias_ordenadas.index, categorias_ordenadas):
+        pct = valor / total_gastos * 100
+        if pct < 6:
+            legendas.append(f"{nome}: R$ {valor:,.2f} ({pct:.1f}%)".replace('.', ','))
+        else:
+            legendas.append(f"{nome}: R$ {valor:,.2f}".replace('.', ','))
+
     ax.legend(
         wedges,
         legendas,
@@ -82,6 +88,7 @@ def gerar_grafico_pizza_periodo(df, nome_arquivo):
     plt.savefig(nome_arquivo)
     plt.close()
     return nome_arquivo
+
 
 
 
