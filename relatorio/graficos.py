@@ -27,19 +27,18 @@ def gerar_grafico_pizza_periodo(df, nome_arquivo):
     explode = [0.01 + (v / categorias_ordenadas.max()) * 0.1 for v in categorias_ordenadas]
 
     fig, ax = plt.subplots(figsize=(7, 6))
-    wedges, _, _ = ax.pie(
+    wedges, *_ = ax.pie(
         categorias_ordenadas,
         startangle=90,
         explode=explode,
         labels=None,
-        autopct=lambda pct: f'{pct:.1f}%',
+        autopct=lambda pct: f"{pct:.1f}%",
         textprops=dict(color="white", fontsize=8),
-        pctdistance=0.7,
-        radius=0.85,
+        pctdistance=0.6,  # percentual mais próximo do centro
+        radius=0.85
     )
-    pos = ax.get_position()
-    ax.set_position([pos.x0 - 0.07, pos.y0, pos.width, pos.height])
 
+    # Nome fora da fatia + seta opcional
     for i, p in enumerate(wedges):
         ang = (p.theta2 - p.theta1) / 2. + p.theta1
         x = np.cos(np.deg2rad(ang))
@@ -57,19 +56,34 @@ def gerar_grafico_pizza_periodo(df, nome_arquivo):
             "color": "black"
         }
 
-        if percentual <= 0.3:
-            anotacao["arrowprops"] = dict(arrowstyle="-")
+        # Só coloca traço se fatia for pequena
+        if percentual <= 0.08:
+            anotacao["arrowprops"] = dict(arrowstyle="-", lw=0.8)
 
-        ax.annotate(
-            f'{categorias_ordenadas.index[i]}: R$ {valor:,.2f}'.replace('.', ','),
-            **anotacao
-        )
+        ax.annotate(str(categorias_ordenadas.index[i]), **anotacao)
+
+    # Legenda com valores
+    legendas = [
+        f"{nome}: R$ {valor:,.2f}".replace('.', ',')
+        for nome, valor in zip(categorias_ordenadas.index, categorias_ordenadas)
+    ]
+    ax.legend(
+        wedges,
+        legendas,
+        title="Categorias",
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.15),
+        ncol=2,
+        fontsize=8
+    )
 
     plt.title("Gastos por Categoria no Período")
     plt.tight_layout()
     plt.savefig(nome_arquivo)
     plt.close()
     return nome_arquivo
+
+
 
 # =====================================================
 # 📈 Gráfico de Linha: Conta ao longo do tempo

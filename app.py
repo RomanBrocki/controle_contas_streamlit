@@ -63,13 +63,13 @@ if st.session_state["tela_atual"] == "inicial":
         st.write("")
 
     with col2:
-        if st.button("Mês Vigente"):
+        if st.button("Mês Vigente", use_container_width=True):
             ir_para_mes_vigente()
             st.rerun()
-        if st.button("Histórico"):
+        if st.button("Histórico", use_container_width=True):
             ir_para_historico()
             st.rerun()
-        if st.button("Relatórios"):
+        if st.button("Relatórios", use_container_width=True):
             st.session_state["tela_atual"] = "relatorios"
             st.session_state["grafico_comparativo_pronto"] = False
             st.session_state["pdf_comparativo_pronto"] = False
@@ -145,7 +145,7 @@ else:
         st.subheader("📈 Contas por Período")
 
         # Obter anos e meses disponíveis no banco
-        anos_disponiveis, meses_disponiveis = get_anos_meses_disponiveis()
+        anos_disponiveis, meses_disponiveis = get_anos_meses_disponiveis() or ([], [])
 
         if not anos_disponiveis or not meses_disponiveis:
             st.warning("Não há dados disponíveis para gerar comparativos.")
@@ -232,7 +232,7 @@ else:
                     mes_fim,
                     ano_fim
                 )
-                nome_arquivo = f"relatorio_{conta_escolhida.lower()}_{mes_inicio:02d}{ano_inicio}_{mes_fim:02d}{ano_fim}.pdf"
+                nome_arquivo = f"relatorio_{(conta_escolhida or '').lower()}_{mes_inicio:02d}{ano_inicio}_{mes_fim:02d}{ano_fim}.pdf"
                 st.download_button(
                     label="📄 Baixar PDF do Comparativo",
                     data=pdf_bytes,
@@ -264,12 +264,13 @@ else:
                     ano_fim
                 )
                 nome_arquivo = f"relatorio_resumo_{mes_inicio:02d}{ano_inicio}_{mes_fim:02d}{ano_fim}.pdf"
-                st.download_button(
-                    label="📄 Baixar PDF do Resumo",
-                    data=pdf_bytes,
-                    file_name=nome_arquivo,
-                    mime="application/pdf"
-                )
+                if pdf_bytes is not None:
+                    st.download_button(
+                        label="📄 Baixar PDF do Comparativo",
+                        data=pdf_bytes,
+                        file_name=nome_arquivo,
+                        mime="application/pdf"
+                    )
 
 
 

@@ -29,12 +29,17 @@ def set_background(image_file):
         font-size: 80px;
         font-weight: bold;
         margin-top: 50px;
-        text-shadow: 6px 6px 15px rgba(0, 0, 0, 1);
+        text-shadow:
+            3px 3px 0px #000,     /* sombra nítida de contorno */
+            6px 6px 15px rgba(0,0,0,0.8), /* sombra desfocada */
+            8px 8px 25px rgba(0,0,0,0.9); /* halo mais espalhado */
     }}
     .stButton > button {{
         width: 100%;
         height: 90px;
         font-size: 26px;
+        display: block;          /* garante bloco */
+        margin: auto;            /* centraliza vertical/horizontalmente na coluna */
     }}
     </style>
     """
