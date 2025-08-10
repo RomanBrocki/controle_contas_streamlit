@@ -205,7 +205,7 @@ def gerar_relatorio_periodo_pdf(df, mes_inicio, ano_inicio, mes_fim, ano_fim):
 
     # Gráficos de linha para contas recorrentes (até 3 por página)
     contas_validas = filtrar_contas_repetidas(df)
-    graficos_por_pagina = 3
+    graficos_por_pagina = 2
     imagens = []
 
     for conta in contas_validas:
@@ -227,7 +227,7 @@ def gerar_relatorio_periodo_pdf(df, mes_inicio, ano_inicio, mes_fim, ano_fim):
     for i in range(0, len(imagens), graficos_por_pagina):
         pdf.add_page()
         for j, img_path in enumerate(imagens[i:i+graficos_por_pagina]):
-            y_pos = 30 + j * 85
+            y_pos = 30 + j * 120
             pdf.image(img_path, x=10, y=y_pos, w=190)
 
     # Listagem agrupada por mês

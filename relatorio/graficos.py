@@ -98,10 +98,11 @@ def gerar_grafico_pizza_periodo(df, nome_arquivo):
 
 def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_fim, ano_fim):
     """
-    Gera um gráfico de linha visualmente limpo para exibir a variação de uma conta específica
-    ao longo de um intervalo de meses, com escala ajustada automaticamente e estética minimalista.
+    Gráfico de linha com:
+    - range mínimo de Y para evitar distorção em variações pequenas
+    - rótulos de valores com deslocamento proporcional e clamp dentro do gráfico
     """
-    
+
     if df.empty or "mes" not in df.columns or "ano" not in df.columns or "valor_total" not in df.columns:
         raise ValueError("DataFrame de entrada está vazio ou incompleto.")
 
@@ -112,49 +113,77 @@ def gerar_grafico_comparativo_linha(df, nome_conta, mes_inicio, ano_inicio, mes_
     fig, ax = plt.subplots(figsize=(10, 4))
     ax.plot(df["periodo"], df["valor_total"], marker="o", linestyle="-", color="#4FC3F7", linewidth=2)
 
-    # Escala dinâmica (sem base zero, nem espaço exagerado)
-    y_min = df["valor_total"].min()
-    y_max = df["valor_total"].max()
-    margem_superior = (y_max - y_min) * 0.08 if y_max > y_min else 10
-    margem_inferior = (y_max - y_min) * 0.1 if y_max > y_min else 5
+    # ===== Escala dinâmica com range mínimo =====
+    y_min = float(df["valor_total"].min())
+    y_max = float(df["valor_total"].max())
+    data_range = y_max - y_min
 
-    ax.set_ylim(
-        bottom=max(0, y_min - margem_inferior),
-        top=y_max + margem_superior
-    )
+    # range mínimo (evita “explodir” o gráfico por diferença de centavos)
+    min_visual_range = max(10.0, 0.2 * max(y_max, 1.0))  # 10 reais ou 20% do valor típico
 
-    # Rótulos afastados dos pontos
+    if data_range < min_visual_range:
+        # Expande em torno do valor médio
+        mid = (y_min + y_max) / 2.0
+        y_range = min_visual_range
+        pad_up = 0.12 * y_range
+        pad_dn = 0.10 * y_range
+        bottom = max(0.0, mid - y_range / 2.0 - pad_dn)
+        top = mid + y_range / 2.0 + pad_up
+    else:
+        # Usa range real + margens proporcionais
+        y_range = data_range
+        pad_up = 0.12 * y_range
+        pad_dn = 0.10 * y_range
+        bottom = max(0.0, y_min - pad_dn)
+        top = y_max + pad_up
+
+    ax.set_ylim(bottom=bottom, top=top)
+
+    # ===== Rótulos dos pontos (proporcionais ao range + clamp) =====
     for i, valor in enumerate(df["valor_total"]):
-        deslocamento = 12 if i % 2 == 0 else -16
-        va = 'bottom' if deslocamento > 0 else 'top'
-        ax.text(i, valor + deslocamento, f"R$ {valor:.2f}", ha='center', va=va, fontsize=9)
-
+        desloc = (0.04 * y_range) if (i % 2 == 0) else (-0.06 * y_range)
+        y_text = float(valor) + desloc
+        # mantém o texto dentro do gráfico
+        y_text = min(top - 0.04 * y_range, max(bottom + 0.04 * y_range, y_text))
+        va = 'bottom' if desloc > 0 else 'top'
+        ax.annotate(
+            f"R$ {float(valor):.2f}",
+            xy=(i, float(valor)),
+            xytext=(i, y_text),
+            textcoords='data',
+            ha='center',
+            va=va,
+            fontsize=7,
+            clip_on=True
+        )
 
     # Título
     titulo = f"Comparativo de conta '{nome_conta}' - {mes_inicio:02d}/{ano_inicio} a {mes_fim:02d}/{ano_fim}"
-    ax.set_title(titulo, fontsize=14, pad=40)  # aumenta distância do gráfico para o topo
+    ax.set_title(titulo, fontsize=14, pad=40)
+
     # Linha de média
-    media = df["valor_total"].mean()
+    media = float(df["valor_total"].mean())
     ax.axhline(media, linestyle="--", color="gray", linewidth=1.2, label=f"Média da conta: R$ {media:.2f}")
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.20), fontsize=9, frameon=False)
-
 
     # Limpeza estética
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.spines["left"].set_visible(False)
-    ax.spines["bottom"].set_color("#888888")  # manter apenas linha do eixo X
-
+    ax.spines["bottom"].set_color("#888888")
     ax.tick_params(left=False, right=False)
-    ax.set_yticks([])  # remove marcações do Y
+    ax.set_yticks([])
     ax.set_ylabel("")
     ax.set_xlabel("")
     ax.grid(False)
 
     plt.xticks(rotation=45)
-    plt.tight_layout()
+
+    # Reserva espaço p/ título/legenda/ticks no PDF
+    fig.subplots_adjust(top=0.80, bottom=0.20)
 
     return fig
+
 
 # =====================================================
 # 📊 Gráfico comparativo duplo: mês anterior e ano anterior
